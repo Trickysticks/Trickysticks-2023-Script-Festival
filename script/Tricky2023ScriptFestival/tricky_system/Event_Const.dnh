@@ -1,0 +1,56 @@
+//Custom Events
+
+//Effect Rendering
+let EV_EXTEND = EV_USER + 1;
+let EV_GET_SPELL = EV_USER + 2;
+let EV_FULL_POWER = EV_USER + 3;
+let EV_HISCORE = EV_USER + 4;
+let EV_STAGE_CLEAR = EV_USER + 5;
+let EV_MAX_BALANCE = EV_USER + 6;
+
+let EV_BOSS_EFFECT = EV_USER + 7; //BossEffectsEx
+
+let EV_EFFECT = EV_USER + 8;
+let EV_CONCENTRATION = EV_USER + 9;
+let EV_EXPLODE = EV_USER + 10;
+
+//Item Creation
+let EV_CREATE_ITEM = EV_USER + 11;
+let EV_DELETE_ITEM = EV_USER + 12; //For shot deletion items
+
+//Shot Deletion
+let EV_DELETE_SHOT = EV_USER + 13;
+let EV_DELETE_LASER = EV_USER + 14;
+let EV_DELETE_ST_LASER = EV_USER + 15;
+let EV_DELETE_WAVE = EV_USER + 16;
+
+//Audio Signaling
+let EV_LOAD_SOUND = EV_USER + 17; //For local sound objects
+let EV_SOUND = EV_USER + 18;
+let EV_MUSIC_START = EV_USER + 19;
+let EV_MUSIC_STOP = EV_USER + 20;
+let EV_MUSIC_PAUSE = EV_USER + 21;
+let EV_MUSIC_RESUME = EV_USER + 22;
+let EV_MUSIC_FADE = EV_USER + 23;
+
+//Stage Enemy Spawning
+let EV_SPAWN_ENEMY = EV_USER + 24;
+
+//Save Data
+let EV_UNLOCK = EV_USER + 25;
+let EV_HISTORY = EV_USER + 26;
+
+let EV_SPELLBG = EV_USER + 27;
+let EV_SPELLBGEND = EV_USER + 28;
+
+let EV_DIALOGUE = EV_USER + 29;
+let EV_KILLBOSS = EV_USER + 30;
+
+let EV_DECLARESPELL = EV_USER + 31;
+let EV_PLAYERGETITEM = EV_USER + 32;
+
+//Music sync
+let EV_MUSIC_INFO = EV_USER + 33;
+
+//Wish stuff
+let EV_BYAK_AURA = EV_USER + 34;

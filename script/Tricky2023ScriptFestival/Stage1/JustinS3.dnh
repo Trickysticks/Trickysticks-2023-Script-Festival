@@ -1,0 +1,332 @@
+#TouhouDanmakufu
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Justin Spell 3"]
+#Background["./NamelessPath.dnh"]
+#Player["./../lib/ColePlayer/Cole.dnh"]
+//#BGM["./../sfx/bgm/bgm2.ogg"]
+
+#include "./../lib/TerraShot1x/shot_const.dnh"
+#include "./../lib/includes/BossIncludes.dnh"
+
+@Event{
+	alternative(GetEventType())
+		case(EV_REQUEST_LIFE){ SetScriptResult(1000); }
+		case(EV_REQUEST_TIMER){ SetScriptResult(999); }
+		case(EV_REQUEST_SPELL_SCORE){ SetScriptResult(10000000); }
+		//case(EV_REQUEST_IS_DURABLE_SPELL){ SetScriptResult(true); }
+		case(EV_GAIN_SPELL){ AddScore(ObjEnemyBossScene_GetInfo(objScene, INFO_SPELL_SCORE)); }
+}
+
+@Initialize{
+
+	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+	ObjEnemy_Regist(objEnemy);
+	Invuln(objEnemy, 360, 12.5, 10);
+	PlayEnemyHitSound(objEnemy, 1);
+	
+	let Justin = GetCurrentScriptDirectory~"sprites/Justin_Sheet.png";
+	ObjPrim_SetTexture(objEnemy, Justin); 
+	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 96, 96);
+	ascent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
+	descent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_RIGHT, 96, 96*x, 96*2, 96*x+96);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*3, 96*2, 96*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*2, 96*2, 96*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*1, 96*2, 96*2);
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_LEFT, 96*2, 96*x, 96*3, 96*x+96);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*3, 96*3, 96*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*2, 96*3, 96*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*1, 96*3, 96*2);
+	ascent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACK, 96*4, 96*x, 96*5, 96*x+96);}
+	descent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACKEND, 96*4, 96*x, 96*5, 96*x+96);}
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_IDLE, 8);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_LEFT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_RIGHT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_ATTACK, 5);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_RIGHT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_LEFT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_ATTACK, 2);
+	ObjAnim_StartAnimationA2(objEnemy, 0, 0);
+	ObjSprite2D_SetDestCenter(objEnemy); 
+	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
+	
+	SetAutoDeleteObject(true);
+	delayedstart;
+	End;
+}
+
+/*
+task End {
+	let itemx = 0;
+	let itemy = 0;
+	while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	
+	SetShotAutoDeleteClip(32, 40, 32, 32);
+	NotifyEventAll(EV_SPELLBGEND, 0);
+	//DeleteShotWave(1,GetX,GetY,20);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	PlaySoundEffect("end",60,GetCenterX);
+	CreateItems02(12, ITEM_POINT_S, GetEnemyX, GetEnemyY, 0, -50, 35, 35, 10000);
+	SetForbidPlayerShot(false);
+	//SetPlayerSpeed(4.2, 1.7);
+	SetCommonData("charm", false);
+	Obj_Delete(objEnemy);
+	CloseScript(GetOwnScriptID);
+}
+*/
+
+task End {
+	let itemx = 0;
+	let itemy = 0;
+	while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	
+	BossExplosion(objEnemy, 1, GetOwnScriptID);
+}
+
+task delayedstart{
+	
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX, 140, 60, LERP_DECELERATE);
+	wait(120);
+	
+	ObjEnemyBossScene_StartSpell(objScene);
+	ObjEnemyBossScene_SetSpellTimer(objScene, (75)*(60));
+	PlaySoundEffect("cardcall", 90, GetCenterX);
+	
+	let justin_cut = GetCurrentScriptDirectory~"sprites/JustinCutin.png";
+	ObjCutin_SetSpellcardS4("Sword Skill &quot;Shooting Star Swords of Determination&quot;", justin_cut, "NAZRIN", "42", "255", "42");
+	ObjCutin_LaunchS3("NAZRIN", "0", "Hard");
+	//HiroyukiCutin;
+	NotifyEventAll(EV_SPELLBG, 0);
+	
+	wait(120);
+	attack1;
+	//attack2;
+	SetShotAutoDeleteClip(32, 40, 32, 32);
+}
+
+task attack1{
+	let count = 0;
+	let dir = 0;
+	let dir2 = 0;
+	let radius = 75;
+	let radius2 = 30;
+	let way = 8;
+	let width = 7;
+	let way2 = 19;
+	let one = 1;
+	let one2 = 1;
+	let one3 = 1;
+	let tiltOne = 1;
+	let bulletspd = 2;
+	let iteration = 1;
+	let x = 20;
+	let positions1 = [[GetEnemyX-140, GetEnemyY+10], [GetEnemyX-70, GetEnemyY-20], [GetEnemyX, GetEnemyY-100], [GetEnemyX+70, GetEnemyY-20], [GetEnemyX+140, GetEnemyY+10]];
+	let order = 0;
+	let index = 0;
+	
+	PlaySoundEffect("charge2", 90, GetEnemyX);
+	TCharge01(GetEnemyX, GetEnemyY, 3, 45, 165, 42, 42, BLEND_ADD_ARGB, 25);
+	wait(45);
+	loop{
+		PlaySoundEffect("boon", 100, GetEnemyX);
+		loop(5){
+			CreateSword(positions1[order][0], positions1[order][1], order);
+			order++;
+		}
+		order--; //todo - make them go in right to left order on second wave
+		wait(600);
+		PlaySoundEffect("boon", 100, GetEnemyX);
+		loop(5){
+			CreateSword(positions1[order][0], positions1[order][1], order);
+			order--;
+		}
+		order = 0;
+		wait(600);
+		yield;
+	}
+}
+
+task CreateSword(x, y, order) {
+	let objEnemy = ObjEnemy_Create(OBJ_ENEMY);
+	
+	ObjEnemy_SetLife(objEnemy, 999999);
+	ObjEnemy_SetDamageRate(objEnemy, 0, 0);
+	
+	let sword = GetCurrentScriptDirectory~"sprites/Sword_Straight.png";
+	ObjPrim_SetTexture(objEnemy, sword);
+	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 109, 300);
+	ObjSprite2D_SetDestCenter(objEnemy);
+	ObjRender_SetScaleXYZ(objEnemy, 0.25, 0.25, 0.5);
+	
+	ObjEnemy_Regist(objEnemy);
+	ObjMove_SetPosition(objEnemy, GetEnemyX, GetEnemyY);
+	ObjMove_SetDestAtFrame(objEnemy, x, y, 60, LERP_DECELERATE);
+	ObjEnemy_SetAutoDelete(objEnemy, false);
+	
+	let GetX = 0;
+	let GetY = 0;
+	let GetLife = 0;
+	let OnScreen = false;
+	
+	let angle = 0;
+	let move_ang = 90;
+	let spd;
+	let way = 8; 
+	let delay = 240;
+	let multiplier = 1;
+	let color = 0;
+	let angleZ = 0;
+	let one = 1;
+	if(x>GetEnemyX){ one = -1; }
+	
+	let alpha = 0;
+	
+	let dir = 0;
+	
+	ObjRender_SetAlpha(objEnemy, 0);
+	
+	let curAngle = dir;
+	
+	//SetIntersectionVisualization(true);
+	EnemyCollision(objEnemy,12,30);
+	Const;
+	//Movement;
+	FadeIn;
+	SwordManagement;
+	Fire;
+	End;
+	
+	task Const {
+		while(!Obj_IsDeleted(objEnemy)) {
+			GetX = ObjMove_GetX(objEnemy);
+			GetY = ObjMove_GetY(objEnemy);
+			GetLife = ObjEnemy_GetInfo(objEnemy,INFO_LIFE);
+			OnScreen = (GetX>-60 && GetX<GetStgFrameWidth+60 && GetY>-60 && GetY<GetStgFrameHeight+60);
+			yield;
+		}
+	}
+	
+	task FadeIn{
+		let fadeTime = 30;
+		let fadeCount = 0;
+		loop(30){
+			fadeCount++;
+			alpha = Interpolate_Smooth(0, 255, fadeCount/fadeTime);
+			if(!Obj_IsDeleted(objEnemy)){ ObjRender_SetAlpha(objEnemy, alpha); }
+			yield;
+		}
+	}
+	task FadeOut{
+		let fadeTime = 30;
+		let fadeCount = 0;
+		loop(30){
+			fadeCount++;
+			alpha = Interpolate_Smooth(255, 0, fadeCount/fadeTime);
+			if(!Obj_IsDeleted(objEnemy)){ ObjRender_SetAlpha(objEnemy, alpha); }
+			yield;
+		}
+		if(!Obj_IsDeleted(objEnemy)){ Obj_Delete(objEnemy); }
+	}	
+	
+	task SwordManagement {
+		let startSpeed = 6;
+		let curSpeed = 6;
+		let endSpeed = 0;
+		let spinCount = 0;
+		let spinTime = 105;
+		let aliveTime = 0;
+		let tarAliveTime = 360+60*order;
+		let triggered = false;
+		
+		while(!Obj_IsDeleted(objEnemy)){
+			aliveTime++;
+			if(aliveTime > 60 && aliveTime<tarAliveTime && aliveTime%30==0){
+				PlaySoundEffect("shot3", 80, GetEnemyX);
+				loop(14){
+					let objAlter = CShot(GetX, GetY, 3, dir, -0.03, 2, [SHOT_LARGE_STAR_GREEN, SHOT_STAR_DGREEN][color%2], 15);
+					if(color%2==0){ Obj_SetRenderPriorityI(objAlter, Obj_GetRenderPriorityI(objAlter)-1); }
+					dir+=360/14;
+					color++;
+				}
+				dir+=360/14/2.44*one;
+			}
+			if(aliveTime==tarAliveTime){
+				SpinAndMurderize(objEnemy);
+				break;
+			}
+			yield;
+		}
+		wait(60); 
+		//FadeOut;
+	}
+	
+	task FollowEnemy(obj, followingObject, verticalOffset){
+		while(!Obj_IsDeleted(obj)){
+			if(!Obj_IsDeleted(followingObject)){
+				ObjMove_SetX(obj, ObjMove_GetX(followingObject));
+				ObjMove_SetY(obj, ObjMove_GetY(followingObject)+verticalOffset);
+				ObjMove_SetAngle(obj, ObjMove_GetAngle(followingObject));
+			}
+			yield;
+		}
+	}
+	
+	task SpinAndMurderize(sourceEnemy){
+		let spinningTime = 0;
+		let swordAngle = GetAngleToPlayer(sourceEnemy);
+		PlaySoundEffect("charge2", 90, GetX);
+		TCharge01(GetX, GetY, 3, 45, 35, 255, 42, BLEND_ADD_ARGB, 25);
+		wait(45);
+		swordAngle = GetAngleToPlayer(sourceEnemy);
+		ObjMove_SetAngle(objEnemy, swordAngle);
+		PlaySoundEffect("slash", 90, GetX);
+		AlertZone01(2, GetX, GetY, ObjMove_GetAngle(objEnemy), 30);
+		while(OnScreen && !Obj_IsDeleted(objEnemy)){
+			spinningTime++;
+			curAngle+=spinningTime/5;
+			ObjRender_SetAngleZ(objEnemy, curAngle+sqrt(spinningTime));
+			ObjMove_SetSpeed(objEnemy, 1.25+spinningTime/20);
+			if(spinningTime%2==0){
+				loop(2){
+					let objFade = CShot(ObjMove_GetX(objEnemy)+35*cos(curAngle), ObjMove_GetY(objEnemy)+35*sin(curAngle), 0.05, angle2, SHOT_BALL_GREEN, 5);
+					ObjRender_SetBlendType(objFade, BLEND_ADD_ARGB);
+					FadeDeleteThing(objFade, 15);
+					curAngle+=360/2;
+				}
+			}
+			yield;
+		}
+	}
+	
+	task FadeDeleteThing(thingToDelete, waitTime){
+		wait(waitTime);
+		if(!Obj_IsDeleted(thingToDelete)){ ObjShot_FadeDelete(thingToDelete); }
+	}
+	
+	task Fire{
+		while(!Obj_IsDeleted(objEnemy)){
+			yield;
+		}
+	}
+	
+	task End {
+	/*
+		while(!OnScreen) { yield; }
+		while(GetLife>0 && OnScreen) { yield; }
+		if(OnScreen){
+			//PlaySoundEffect("thwomp", 100, GetX);
+			//TExpan(GetX, GetY, 2, 15, 165, 42, 42, 100);
+		}
+		//DeleteShotInCircle(TYPE_SHOT, TYPE_ITEM, GetX, GetY, 20);
+		Obj_Delete(objEnemy);
+	*/
+	}
+	
+	task EnemyCollision(objEnemy,hitboxA,hitboxB) {
+		while(!Obj_IsDeleted(objEnemy)) {
+			ObjEnemy_SetIntersectionCircleToPlayer(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxB);
+			yield;
+		}
+	}
+}

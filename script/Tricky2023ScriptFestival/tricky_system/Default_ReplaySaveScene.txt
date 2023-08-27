@@ -1,0 +1,392 @@
+//ÉäÉvÉåÉCï€ë∂ÉXÉNÉäÉvÉg
+
+@Initialize
+{
+	SetAutoDeleteObject(true);
+	LoadReplayList();
+
+	TBackground();
+	TReplayIndexSelection();
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+let MENU_INDEX_SELECTION = 1;
+let MENU_NAME_ENTRY = 2;
+let menuMode = MENU_INDEX_SELECTION;
+
+function CreateTextObject(let mx, let my, let size, let text)
+{
+	let obj = ObjText_Create();
+	ObjText_SetText(obj, text);
+	ObjText_SetFontSize(obj, size);
+	ObjText_SetFontBold(obj, true);
+	ObjText_SetFontColorTop(obj, 128, 128, 255);
+	ObjText_SetFontColorBottom(obj, 64, 64, 255);
+	ObjText_SetFontBorderType(obj, BORDER_FULL);
+	ObjText_SetFontBorderColor(obj,255, 255, 255);
+	ObjText_SetFontBorderWidth(obj, 2);
+	Obj_SetRenderPriorityI(obj, 10);
+	ObjRender_SetX(obj, mx);
+	ObjRender_SetY(obj, my);
+	return obj;
+}
+
+task TBackground
+{
+	let target = GetTransitionRenderTargetName();
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, target);
+	Obj_SetRenderPriority(obj, 0.1);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 640, 480);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetPosition(obj, 320, 240, 0);
+	ObjRender_SetAlpha(obj, 64);
+}
+
+task TReplayIndexSelection()
+{
+	let cursorY = 0;
+	let page = 0;
+	let countMaxItem = REPLAY_INDEX_DIGIT_MAX - REPLAY_INDEX_DIGIT_MIN + 1;
+	let countItemPerPage = 10;
+	let pageMax = trunc((countMaxItem - 1) / countItemPerPage);
+	pageMax = max(pageMax, 1);
+	let lastPageMaxCursorY = trunc(countMaxItem / countItemPerPage);
+
+	task TMenuItem(let itemY)
+	{
+		let objText = CreateTextObject(64, 64 + 30 * itemY, 18, "");
+		let objSelect = CreateTextObject(64, 64 + 30 * itemY, 18, "");
+		ObjRender_SetBlendType(objSelect, BLEND_ADD_RGB);
+
+		let oldPage = -1;
+		while(menuMode == MENU_INDEX_SELECTION)
+		{
+			if(page != oldPage)
+			{
+				let index = page * countItemPerPage + itemY + 1;
+				let text = rtos("00", index) ~ " ";
+				if(IsValidReplayIndex(index))
+				{
+					text = text ~ vtos("-8s", GetReplayInfo(index, REPLAY_USER_NAME)) ~ " ";
+					text = text ~ GetReplayInfo(index, REPLAY_DATE_TIME) ~ " ";
+					text = text ~ rtos("000000000000", GetReplayInfo(index, REPLAY_TOTAL_SCORE)) ~ " ";
+				}
+				else
+				{
+					text = text ~ "No Data";
+				}
+				ObjText_SetText(objText, text);
+				ObjText_SetText(objSelect, text);
+				oldPage = page;
+			}
+			
+			if(page == pageMax && itemY >= lastPageMaxCursorY)
+			{
+				Obj_SetVisible(objText, false);
+				Obj_SetVisible(objSelect, false);
+			}
+			else
+			{
+				Obj_SetVisible(objText, true);
+				Obj_SetVisible(objSelect, itemY == cursorY);
+			}
+
+			yield;
+		}
+		Obj_Delete(objText);
+		Obj_Delete(objSelect);
+	}
+
+	ascent(let iItem in 0 .. countItemPerPage)
+	{
+		TMenuItem(iItem);
+	}
+
+	//ÉLÅ[èÛë‘Ç™ÉäÉZÉbÉgÇ≥ÇÍÇÈÇ‹Ç≈ë“ã@
+	while(GetVirtualKeyState(VK_OK) != KEY_FREE){yield;}
+
+	//ÉLÅ[èàóù
+	let frameKeyHold = 0;//ÉLÅ[âüÇµÇ¡ÇœÇ»ÇµÉtÉåÅ[ÉÄêî
+	while(menuMode == MENU_INDEX_SELECTION)
+	{
+		//åàíË
+		if(GetVirtualKeyState(VK_OK) == KEY_PULL)
+		{
+			menuMode = MENU_NAME_ENTRY;
+			let index = page * countItemPerPage + cursorY + 1;
+			TNameEntry(index);
+			
+			break;
+		}
+
+		//ÉJÅ[É\Éãà⁄ìÆ
+		if(GetVirtualKeyState(VK_UP) == KEY_PUSH || GetVirtualKeyState(VK_UP) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_UP) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorY--;
+			}
+		}
+		else if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH || GetVirtualKeyState(VK_DOWN) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorY++;
+			}
+		}
+		else if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH || GetVirtualKeyState(VK_LEFT) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				page--;
+			}
+		}
+		else if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH || GetVirtualKeyState(VK_RIGHT) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				page++;
+			}
+		}
+		else
+		{
+			frameKeyHold = 0;
+		}
+
+		if(page < 0)
+		{
+			page = pageMax;
+		}
+		else if(page > pageMax)
+		{
+			page = 0;
+		}
+
+		if(page != pageMax)
+		{
+			if(cursorY < 0)
+			{
+				cursorY = countItemPerPage - 1;
+			}
+			else if(cursorY >= countItemPerPage)
+			{
+				cursorY = 0;
+			}
+		}
+		else
+		{
+			if(cursorY < 0)
+			{
+				cursorY = lastPageMaxCursorY - 1;
+			}
+			else if(cursorY >= lastPageMaxCursorY)
+			{
+				cursorY = 0;
+			}
+		}
+
+		yield;
+	}
+
+}
+
+
+task TNameEntry(let replayIndex)
+{
+	let strTextIn = 
+	[
+		["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"],
+		["Q","R","S","T","U","V","W","X","Y","Z",".",",",":",";","_","@"],
+		["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"],
+		["q","r","s","t","u","v","w","x","y","z","+","-","/","*","=","%"],
+		["0","1","2","3","4","5","6","7","8","9","0","!","?","'","\"","$"],
+		["(",")","{","}","[","]","<",">","&","#","|","~","^"," "," ","èI"]
+	];
+
+	let strTextView = 
+	[
+		["Ç`","Ça","Çb","Çc","Çd","Çe","Çf","Çg","Çh","Çi","Çj","Çk","Çl","Çm","Çn","Ço"],
+		["Çp","Çq","Çr","Çs","Çt","Çu","Çv","Çw","Çx","Çy","ÅD","ÅC","ÅF","ÅG","ÅQ","Åó"],
+		["ÇÅ","ÇÇ","ÇÉ","ÇÑ","ÇÖ","ÇÜ","Çá","Çà","Çâ","Çä","Çã","Çå","Çç","Çé","Çè","Çê"],
+		["Çë","Çí","Çì","Çî","Çï","Çñ","Çó","Çò","Çô","Çö","Å{","Å|","Å^","Åñ","ÅÅ","Åì"],
+		["ÇO","ÇP","ÇQ","ÇR","ÇS","ÇT","ÇU","ÇV","ÇW","ÇX","ÇO","ÅI","ÅH","Åf","Åh","Åê"],
+		["Åi","Åj","Åo","Åp","Åm","Ån","ÅÉ","ÅÑ","Åï","Åî","Åb","Å`","ÅO"," "," ","èIóπ"]
+	];
+
+	let cursorX = 0;
+	let cursorY = 0;
+	let maxCursorX = length(strTextIn[0]);
+	let maxCursorY = length(strTextIn);
+
+	task TMenuItem(let itemX, let itemY)
+	{
+		let objText = CreateTextObject(120 + itemX * 24, 200 + itemY * 24, 22, strTextView[itemY][itemX]);
+		let objSelect = CreateTextObject(120 + itemX * 24, 200 + itemY * 24, 22, strTextView[itemY][itemX]);
+		ObjRender_SetBlendType(objSelect, BLEND_ADD_RGB);
+
+		while(menuMode == MENU_NAME_ENTRY)
+		{
+			Obj_SetVisible(objSelect, itemX == cursorX && itemY == cursorY);
+			yield;
+		}
+		Obj_Delete(objText);
+		Obj_Delete(objSelect);
+	}
+
+	ascent(let iY in 0..maxCursorY)
+	{
+		ascent(let iX in 0 .. maxCursorX)
+		{
+			TMenuItem(iX, iY);
+		}
+	}
+
+	//ÉLÅ[èÛë‘Ç™ÉäÉZÉbÉgÇ≥ÇÍÇÈÇ‹Ç≈ë“ã@
+	while(GetVirtualKeyState(VK_OK) != KEY_FREE){yield;}
+
+	//ì¸óÕçœÇ›ï∂éö
+	let userName = "";
+	let objName = CreateTextObject(160, 96, 28, "");
+	task TNameCursor()
+	{
+		let objCursor = CreateTextObject(0, 96, 28, "_");
+		while(menuMode == MENU_NAME_ENTRY)
+		{
+			let nameLength = length(userName);
+			ObjRender_SetX(objCursor, 160 + nameLength * 17);
+			Obj_SetVisible(objCursor, nameLength < 8);
+			yield;
+		}
+		Obj_Delete(objCursor);
+	}
+	TNameCursor;
+
+	//ÉLÅ[èàóù
+	let frameKeyHold = 0;//ÉLÅ[âüÇµÇ¡ÇœÇ»ÇµÉtÉåÅ[ÉÄêî
+	while(menuMode == MENU_NAME_ENTRY)
+	{
+		
+		if(GetVirtualKeyState(VK_OK) == KEY_PULL)
+		{
+			//åàíË
+			let nameLength = length(userName);
+			if(cursorX == maxCursorX-1 && cursorY == maxCursorY-1)
+			{
+				//èIóπÉLÅ[
+				if(nameLength == 0)
+				{
+					userName = "No Name";
+				}
+				else
+				{
+					SaveReplay(replayIndex, userName);
+					SetScriptResult(RESULT_END);
+					CloseScript(GetOwnScriptID());
+					return;
+				}
+			}
+			else if(nameLength < 8)
+			{
+				userName = userName ~ strTextIn[cursorY][cursorX];
+			}
+		}
+		if(GetVirtualKeyState(VK_CANCEL) == KEY_PULL)
+		{
+			//ÉLÉÉÉìÉZÉã
+			let nameLength = length(userName);
+			if(nameLength > 0)
+			{
+				userName = userName[0..nameLength-1];
+			}
+		}
+		ObjText_SetText(objName, userName);
+
+		//ÉJÅ[É\Éãà⁄ìÆ
+		if(GetVirtualKeyState(VK_UP) == KEY_PUSH || GetVirtualKeyState(VK_UP) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_UP) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorY--;
+			}
+		}
+		else if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH || GetVirtualKeyState(VK_DOWN) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorY++;
+			}
+		}
+		else if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH || GetVirtualKeyState(VK_LEFT) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorX--;
+			}
+		}
+		else if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH || GetVirtualKeyState(VK_RIGHT) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH ||
+				frameKeyHold == 20 ||
+				 (frameKeyHold > 20 && (frameKeyHold % 10 == 0)))
+			{
+				cursorX++;
+			}
+		}
+		else
+		{
+			frameKeyHold = 0;
+		}
+
+		if(cursorX < 0)
+		{
+			cursorX = maxCursorX-1;
+		}
+		else if(cursorX >= maxCursorX)
+		{
+			cursorX = 0;
+		}
+
+		if(cursorY < 0)
+		{
+			cursorY = maxCursorY-1;
+		}
+		else if(cursorY >= maxCursorY)
+		{
+			cursorY = 0;
+		}
+
+		yield;
+	}
+}
+

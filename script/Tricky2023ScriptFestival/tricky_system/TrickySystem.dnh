@@ -1,0 +1,710 @@
+let objScene = GetEnemyBossSceneObjectID;
+let CSD = GetCurrentScriptDirectory;
+let maxlife = 0;
+let currentpoint = 0;
+let targetpoint = 0;
+
+#include"../lib/includes/Function_Audio.dnh"
+#include"./Event_Const.dnh"
+
+
+task StartSpellBackgrounds {
+	let scriptSpell = LoadScript(GetCurrentScriptDirectory~"SpellBG.dnh");
+	WriteLog("Starting Spell Background Script.");
+	StartScript(scriptSpell);
+}
+
+task StartAudioScript {
+	let scriptSound = LoadScript(GetCurrentScriptDirectory~"Audio.dnh");
+	WriteLog("Starting Audio Script.");
+	StartScript(scriptSound);
+}
+
+task StartEffects {
+	let scriptEffects = LoadScript(GetCurrentScriptDirectory~"BossEffects.dnh");
+	WriteLog("Starting Effect Script.");
+	StartScript(scriptEffects);
+}
+
+task StartCutins {
+	let scriptCutin = LoadScript(GetCurrentScriptDirectory~"Cutin.dnh");
+	WriteLog("Starting Cutin Script.");
+	StartScript(scriptCutin);
+	StartItemScript(GetCurrentScriptDirectory~"ItemBecauseNatashiIsADumbFurry.dnh");
+}
+
+task StartItems {
+	let scriptItems = LoadScript(GetCurrentScriptDirectory~"Item.dnh");
+	WriteLog("Starting Item Script.");
+	StartScript(scriptItems);
+}
+
+//function wait(w){ loop(w){ yield; }}
+
+task DE(x,y,ID){
+	if(!ObjShot_IsSpellResist(ID)){ ObjShot_FadeDelete(ID); }
+	/*
+	let Target = GetCurrentScriptDirectory~"img/etbreak.png";
+	let objde = ObjPrim_Create(OBJ_SPRITE_2D);
+	let timer = 1;
+	let s = 32;
+	let dc = [];
+       
+	if(ObjShot_IsSpellResist(ID)==false){
+		Obj_SetRenderPriorityI(objde, 29);
+		ObjPrim_SetTexture(objde, Target);
+		dc = GetShotDataInfoA1(ObjShot_GetImageID(ID),TARGET_ENEMY,INFO_DELAY_COLOR);
+		ObjRender_SetColor(objde,dc[0],dc[1],dc[2]);
+		ObjRender_SetBlendType(objde, BLEND_ALPHA);
+		ObjSprite2D_SetSourceRect(objde, 0, 0, 32, 32);
+
+		ObjSprite2D_SetDestCenter(objde);
+		ObjRender_SetScaleXYZ(objde, 1, 1, 1);
+		ObjRender_SetAngleXYZ(objde,0,0,round(rand(0,315)));
+		ObjRender_SetPosition(objde,x,y,125);
+
+		while(!Obj_IsDeleted(ID)){
+			ascent(i in 0..8){
+				ObjSprite2D_SetSourceRect(objde, s*i, 0, s*(i+1), 32);
+				loop(3){ yield;}
+				Obj_Delete(ID);
+			}
+		}
+	Obj_Delete(objde);
+	}
+	*/
+}
+
+task Dis(){
+	let shotarray = [];
+	let radius = 0;
+	loop{
+		radius+=40;
+		shotarray = GetShotIdInCircleA2( GetPlayerX,GetPlayerY, radius, TARGET_ENEMY);
+	 
+		ascent(i in 0..length(shotarray)){
+			DE(ObjMove_GetX(shotarray[i]),ObjMove_GetY(shotarray[i]),shotarray[i]); 
+		}
+		yield;
+		yield;
+		if(radius>=max(GetStgFrameWidth, GetStgFrameHeight)*1.25){
+			break;
+		}
+		yield;
+	} 
+}
+
+task Dis2(){
+
+	let shotarray = [];
+	let radius = 600;
+	DeleteShotAll(TYPE_SHOT, TYPE_ITEM);
+	/*
+	shotarray = GetShotIdInCircleA2( GetPlayerX,GetPlayerY, radius, TARGET_ENEMY);
+	ascent( i in 0..length(shotarray) ){
+		DE(ObjMove_GetX(shotarray[i]),ObjMove_GetY(shotarray[i]),shotarray[i]);
+	}
+	*/
+	
+	yield; 
+}
+
+@Initialize{
+	
+	InitFrame();
+	TScore();
+	TGraze();
+	//TNormPoint();
+	TPlayerLife();
+	TPlayerSpell();
+	TBossLife();
+	TBossTimer();
+	TCurrentFps();
+	TReplayFps();
+	StartAudioScript;
+	StartSpellBackgrounds;
+	StartEffects;
+	StartCutins;
+	StartItems;
+
+	SetPauseScriptPath(CSD ~ "Default_Pause.txt");
+	SetEndSceneScriptPath(CSD ~ "Default_EndScene.txt");
+	SetReplaySaveSceneScriptPath(CSD ~ "Default_ReplaySaveScene.txt");
+	
+	DebugKeys;
+}
+
+
+task DebugKeys {
+	loop{
+		if(GetKeyState(KEY_F)==KEY_PUSH) { SetPlayerLife(max(GetPlayerLife, 69)); SetPlayerSpell(max(GetPlayerSpell, 3)); }
+		if(GetKeyState(KEY_I)==KEY_PUSH) { SetPlayerInvincibilityFrame(100000); }
+		if(GetKeyState(KEY_H)==KEY_PUSH) {
+			if(length(GetEnemyBossObjectID)!=0) { ObjEnemy_AddLife(GetEnemyBossObjectID[0],-maxlife/10); }
+		}
+		if(GetKeyState(KEY_K)==KEY_PUSH) {
+			if(length(GetEnemyBossObjectID)!=0) { ObjEnemy_AddLife(GetEnemyBossObjectID[0],-maxlife); }
+		}
+		if(GetKeyState(KEY_U)==KEY_PUSH) { SetPlayerInvincibilityFrame(0); }
+		yield;
+	}
+}
+
+@MainLoop{
+	if(ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMERF)%60==0){ 
+		if(ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMER)<=10 && ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMER)>3){ PlaySoundEffect("time1", 90, -1); }
+		if(ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMER)<=3 && ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMER)>=1){ PlaySoundEffect("time2", 90, -1); }
+	}	
+	yield;
+}
+
+@Event{
+	alternative(GetEventType())
+
+	case(EV_GAIN_SPELL){
+		let objScene = GetEnemyBossSceneObjectID();
+		let score = ObjEnemyBossScene_GetInfo(objScene, INFO_SPELL_SCORE);
+		TGainSpell(score);
+	}
+
+	case(EV_PLAYER_SHOOTDOWN){ Dis(); }
+
+	case(EV_DELETE_SHOT){ Dis2(); }
+
+	case(EV_START_BOSS_STEP) {
+			if(length(GetEnemyBossObjectID)!=0) { maxlife = ObjEnemy_GetInfo(GetEnemyBossObjectID[0],INFO_LIFE); }
+	}
+		
+	case(EV_PLAYERGETITEM){ currentpoint++; }
+	/*
+	case(EV_DELETE_SHOT_TO_ITEM){
+		let eventParam = GetEventArgument(0);
+		CreateItemA1(ITEM_POINT_S, eventParam[1][0], eventParam[1][1], 10);
+	}
+	*/
+
+/*
+	case(EV_BYAK_AURA) {
+		//let eventParam = GetEventArgument(0);
+		let obj = GetEventArgument(0);
+		let intro = GetEventArgument(1);
+		let silhouette = GetEventArgument(2);
+
+		CheckForAura(obj, intro, silhouette);
+	}
+	*/
+}
+
+//----------------------------------------------------
+//枠外の背景表示
+//----------------------------------------------------
+function InitFrame()
+{
+	let path = GetCurrentScriptDirectory() ~ "img/STG_Frame.png"; //2
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, path);
+	Obj_SetRenderPriorityI(obj, 0); //0
+	ObjSprite2D_SetSourceRect(obj, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	ObjSprite2D_SetDestRect(obj, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+}
+
+//----------------------------------------------------
+//スコア表示
+//----------------------------------------------------
+task TScore()
+{
+	//Score文字列
+	let objScore = ObjText_Create();
+	ObjText_SetText(objScore, "Score");
+	ObjText_SetFontType(objScore, "Generic Mobile System");
+	ObjText_SetFontSize(objScore, 22);
+	ObjText_SetFontBold(objScore, true);
+	ObjText_SetFontColorTop(objScore, 255, 255, 255);
+	ObjText_SetFontColorBottom(objScore, 255, 255, 255);
+	ObjText_SetFontBorderType(objScore, BORDER_FULL);
+	ObjText_SetFontBorderColor(objScore,128, 128, 128);
+	ObjText_SetFontBorderWidth(objScore, 1);
+	Obj_SetRenderPriority(objScore, 0.01);
+	ObjRender_SetX(objScore, 428);
+	ObjRender_SetY(objScore, 48);
+
+	//得点
+	let pathDigit = GetCurrentScriptDirectory() ~ "img/Default_SystemDigit.png";
+	let count = 12;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+	ObjPrim_SetTexture(obj, pathDigit);
+	//ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+	Obj_SetRenderPriority(obj, 0.1);
+	ObjRender_SetY(obj, 72);
+
+	while(true)
+	{
+		let score = GetScore();
+		score = min(score, 999999999999);
+		let listNum = DigitToArray(score, count);
+
+		ObjSpriteList2D_ClearVertexCount(obj);
+		ascent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			ObjRender_SetX(obj, 440 + iObj * 14);
+			ObjSpriteList2D_SetSourceRect(obj, num * 16, 0, (num + 1) * 16, 18);
+			ObjSpriteList2D_SetDestRect(obj, 0, 0, 16, 18);
+			ObjSpriteList2D_AddVertex(obj);
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//Graze表示
+//----------------------------------------------------
+task TGraze()
+{
+	//Graze文字列
+	let objGraze = ObjText_Create();
+	ObjText_SetText(objGraze, "Graze");
+	ObjText_SetFontType(objGraze, "Generic Mobile System");
+	ObjText_SetFontSize(objGraze, 22);
+	ObjText_SetFontBold(objGraze, true);
+	ObjText_SetFontColorTop(objGraze, 255, 255, 255);
+	ObjText_SetFontColorBottom(objGraze, 255, 255, 255);
+	ObjText_SetFontBorderType(objGraze, BORDER_FULL);
+	ObjText_SetFontBorderColor(objGraze,128, 128, 128);
+	ObjText_SetFontBorderWidth(objGraze, 1);
+	Obj_SetRenderPriority(objGraze, 0.01);
+	ObjRender_SetX(objGraze, 428);
+	ObjRender_SetY(objGraze, 98);
+
+	//得点
+	let pathDigit = GetCurrentScriptDirectory() ~ "img/Default_SystemDigit.png";
+	let count = 5;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+	ObjPrim_SetTexture(obj, pathDigit);
+	//ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+	Obj_SetRenderPriority(obj, 0.1);
+	ObjRender_SetY(obj, 124);
+
+	while(true)
+	{
+		let graze = GetGraze();
+		graze = min(graze, 99999);
+		let listNum = DigitToArray(graze, count);
+
+		ObjSpriteList2D_ClearVertexCount(obj);
+		ascent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			ObjRender_SetX(obj, 440 + iObj * 14);
+			ObjSpriteList2D_SetSourceRect(obj, num * 16, 0, (num + 1) * 16, 18); //original: ObjSpriteList2D_SetSourceRect(obj, num * 36, 0, (num + 1) * 36, 32);
+			ObjSpriteList2D_SetDestRect(obj, 0, 0, 16, 18); //24?
+			ObjSpriteList2D_AddVertex(obj);
+		}
+		yield;
+	}
+}
+
+/*
+task TNormPoint()
+{
+	//Graze文字列
+	let objPoint = ObjText_Create();
+	ObjText_SetText(objPoint, "Point");
+	ObjText_SetFontSize(objPoint, 20);
+	ObjText_SetFontBold(objPoint, true);
+	ObjText_SetFontColorTop(objPoint, 255, 255, 255);
+	ObjText_SetFontColorBottom(objPoint, 255, 255, 255);
+	ObjText_SetFontBorderType(objPoint, BORDER_FULL);
+	ObjText_SetFontBorderColor(objPoint,128, 128, 128);
+	ObjText_SetFontBorderWidth(objPoint, 2);
+	Obj_SetRenderPriority(objPoint, 0.01);
+	ObjRender_SetX(objPoint, 528);
+	ObjRender_SetY(objPoint, 98);
+
+	//得点
+	let objCount = ObjText_Create();
+	//ObjText_SetText(objCount, "0/100");
+	ObjText_SetFontSize(objCount, 18);
+	ObjText_SetFontBold(objCount, true);
+	ObjText_SetFontColorTop(objCount, 255, 255, 255);
+	ObjText_SetFontColorBottom(objCount, 255, 255, 255);
+	ObjText_SetFontBorderType(objCount, BORDER_FULL);
+	ObjText_SetFontBorderColor(objCount,128, 128, 128);
+	ObjText_SetFontBorderWidth(objCount, 2);
+	Obj_SetRenderPriority(objCount, 0.01);
+	ObjRender_SetX(objCount, 528);
+	ObjRender_SetY(objCount, 125);
+	
+	let normpointvaluearray = [325, 650, 975, 1300, 6969, 42042, 1000000, 10000000]; //if you somehow get this high wtf hacker!!!
+	let normpointvaluearrayindex = 0;
+	targetpoint = normpointvaluearray[normpointvaluearrayindex];
+	let normpointstring = "0/100";
+
+
+	while(true)
+	{
+		if(currentpoint>=targetpoint){
+			CreateItemA2(ITEM_1UP, GetPlayerX, GetPlayerY, GetPlayerX, GetPlayerY-75, 10000);
+			normpointvaluearrayindex++;
+			targetpoint = normpointvaluearray[normpointvaluearrayindex];
+		}	
+			
+		//vars are currentpoint and targetpoint
+		normpointstring = IntToString(currentpoint) ~ "/" ~ IntToString(targetpoint);
+		ObjText_SetText(objCount, normpointstring);
+		yield;
+	}
+}
+
+*/
+
+//----------------------------------------------------
+//残機表示
+//----------------------------------------------------
+task TPlayerLife
+{
+	//life文字列
+	let objText = ObjText_Create();
+	ObjText_SetText(objText, "Player");
+	ObjText_SetFontType(objText, "Generic Mobile System");
+	ObjText_SetFontSize(objText, 22);
+	ObjText_SetFontBold(objText, true);
+	ObjText_SetFontColorTop(objText, 255, 255, 255);
+	ObjText_SetFontColorBottom(objText, 255, 255, 255);
+	ObjText_SetFontBorderType(objText, BORDER_FULL);
+	ObjText_SetFontBorderColor(objText,128, 128, 128);
+	ObjText_SetFontBorderWidth(objText, 1);
+	Obj_SetRenderPriority(objText, 0.01);
+	ObjRender_SetX(objText, 428);
+	ObjRender_SetY(objText, 152);
+
+	//残機
+	let pathDigit = GetCurrentScriptDirectory() ~ "img/Default_SystemDigit.png";
+	let count = 2;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+	ObjPrim_SetTexture(obj, pathDigit);
+	//ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+	Obj_SetRenderPriority(obj, 0.1);
+	ObjRender_SetY(obj, 180);
+
+	while(true)
+	{
+		let point = GetPlayerLife();
+		point = min(point, 99);
+		point = max(point, 0);
+		let listNum = DigitToArray(point, count);
+
+		ObjSpriteList2D_ClearVertexCount(obj);
+		ascent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			ObjRender_SetX(obj, 440 + iObj * 14);
+			ObjSpriteList2D_SetSourceRect(obj, num * 16, 0, (num + 1) * 16, 18);
+			ObjSpriteList2D_SetDestRect(obj, 0, 0, 16, 18);
+			ObjSpriteList2D_AddVertex(obj);
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//残スペル表示
+//----------------------------------------------------
+task TPlayerSpell
+{
+	//Spell文字列
+	let objText = ObjText_Create();
+	ObjText_SetText(objText, "Spell");
+	ObjText_SetFontType(objText, "Generic Mobile System");
+	ObjText_SetFontSize(objText, 22);
+	ObjText_SetFontBold(objText, true);
+	ObjText_SetFontColorTop(objText, 255, 255, 255);
+	ObjText_SetFontColorBottom(objText, 255, 255, 255);
+	ObjText_SetFontBorderType(objText, BORDER_FULL);
+	ObjText_SetFontBorderColor(objText,128, 128, 128);
+	ObjText_SetFontBorderWidth(objText, 1);
+	Obj_SetRenderPriority(objText, 0.01);
+	ObjRender_SetX(objText, 428);
+	ObjRender_SetY(objText, 202);
+
+	//スペル
+	let pathDigit = GetCurrentScriptDirectory() ~ "img/Default_SystemDigit.png";
+	let count = 2;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+	ObjPrim_SetTexture(obj, pathDigit);
+	//ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+	Obj_SetRenderPriority(obj, 0.1);
+	ObjRender_SetY(obj, 228);
+
+	while(true)
+	{
+		let point = GetPlayerSpell();
+		point = min(point, 99);
+		let listNum = DigitToArray(point, count);
+
+		ObjSpriteList2D_ClearVertexCount(obj);
+		ascent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			ObjRender_SetX(obj, 440 + iObj * 14);
+			ObjSpriteList2D_SetSourceRect(obj, num * 16, 0, (num + 1) * 16, 18);
+			ObjSpriteList2D_SetDestRect(obj, 0, 0, 16, 18);
+			ObjSpriteList2D_AddVertex(obj);
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//ボスのライフ表示
+//----------------------------------------------------
+task TBossLife
+{
+	let path = GetCurrentScriptDirectory() ~ "img/Default_System.png";
+	let obj = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+	ObjPrim_SetTexture(obj, path);
+	Obj_SetRenderPriority(obj, 0.7);
+
+	let lastRemStep = -1;
+	let lifeRateRender = 0;
+
+	let objScene = ID_INVALID;
+	loop
+	{
+		objScene = GetEnemyBossSceneObjectID();
+		ObjSpriteList2D_ClearVertexCount(obj);
+		if(objScene != ID_INVALID && GetCommonData("bosshudshow",true))
+		{
+			RenderLife();
+		}
+		yield;
+	}
+
+
+	function RenderLife()
+	{
+		//残りステップ
+		let countRemStep = ObjEnemyBossScene_GetInfo(objScene, INFO_REMAIN_STEP_COUNT);
+		if(lastRemStep != countRemStep)
+		{
+			//ステップが変化
+			lifeRateRender = 0;
+		}
+
+		//ライフ表示
+		let lifeTotalMax = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_MAX_LIFE);
+		let lifeTotal = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_LIFE);
+		let lifeRate = min(lifeTotal / lifeTotalMax, lifeRateRender);
+		ObjSpriteList2D_SetSourceRect(obj, 1, 1, 127, 11);
+		ObjSpriteList2D_SetDestRect(obj, 72, 8, 72 + 270 * lifeRate, 12);
+		ObjSpriteList2D_AddVertex(obj);
+
+		//ライフの区切り表示
+		ObjSpriteList2D_SetSourceRect(obj, 132, 1, 137, 11);
+		let listLifeDiv = [0] ~ ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_LIFE_RATE_LIST);
+		ascent(iDiv in 0 .. length(listLifeDiv))
+		{
+			let rate = listLifeDiv[iDiv];
+			let x = 72 + 270 * (1-rate);
+			ObjSpriteList2D_SetDestRect(obj, x-1, 4, x + 1, 14);
+			ObjSpriteList2D_AddVertex(obj);
+		}
+
+		//残りステップ表示
+		ObjSpriteList2D_SetSourceRect(obj, 1, 1, 127, 11);
+		ascent(iStep in 0 .. countRemStep)
+		{
+			let remStepRate = 58 / countRemStep;
+			ObjSpriteList2D_SetDestRect(obj, 4 + iStep * remStepRate + 2, 8,
+				4 + (iStep + 1) * remStepRate, 12);
+			ObjSpriteList2D_AddVertex(obj);
+		}
+
+		lifeRateRender += 0.01;
+		lifeRateRender = min(lifeRateRender, 1);
+		lastRemStep = countRemStep;
+	}
+}
+
+//----------------------------------------------------
+//タイマー表示
+//----------------------------------------------------
+task TBossTimer
+{
+	let pathDigit = GetCurrentScriptDirectory() ~ "img/Default_SystemDigit.png";
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+	ObjPrim_SetTexture(obj, pathDigit);
+	//ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+	Obj_SetRenderPriority(obj, 0.75);
+	ObjRender_SetY(obj, 0);
+	let count = 2;
+
+	let objScene = ID_INVALID;
+	loop
+	{
+		objScene = GetEnemyBossSceneObjectID();
+		ObjSpriteList2D_ClearVertexCount(obj);
+		if(objScene != ID_INVALID && GetCommonData("bosshudshow",true))
+		{
+			RenderTimer();
+		}
+		yield;
+	}
+
+	function RenderTimer()
+	{
+		let timer = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER);
+		timer = min(timer, 99);
+		let listNum = DigitToArray(timer, count);
+
+		ObjSpriteList2D_ClearVertexCount(obj);
+		ascent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			ObjRender_SetX(obj, 352 + iObj * 14);
+			ObjSpriteList2D_SetSourceRect(obj, num * 16, 0, (num + 1) * 16, 18);
+			ObjSpriteList2D_SetDestRect(obj, 0, 0, 16, 18);
+			ObjSpriteList2D_AddVertex(obj);
+		}
+	}
+
+}
+
+//----------------------------------------------------
+//スペルカード取得表示
+//----------------------------------------------------
+task TGainSpell(score)
+{
+if(GetCommonData("pausebeforebonus", false)==true){
+loop(75){
+yield;
+} 
+}
+	let objText = ObjText_Create();
+	ObjText_SetText(objText, "Spell Captured!");
+	ObjText_SetFontSize(objText, 32);
+	ObjText_SetFontBold(objText, true);
+	ObjText_SetHorizontalAlignment(objText, ALIGNMENT_CENTER);
+	ObjText_SetMaxWidth(objText, 300);
+	ObjText_SetFontColorTop(objText, 224, 255, 255);
+	ObjText_SetFontColorBottom(objText, 128, 128, 255);
+	ObjText_SetFontBorderType(objText, BORDER_FULL);
+	ObjText_SetFontBorderColor(objText,0, 0, 0);
+	ObjText_SetFontBorderWidth(objText, 1);
+
+	Obj_SetRenderPriority(objText, 0.6);
+	ObjRender_SetX(objText, (GetStgFrameWidth/2)-150);
+	ObjRender_SetY(objText, 98);
+	let strScore = "Bonus:" ~ IntToString(score);
+	let objScore = ObjText_Create();
+	ObjText_SetText(objScore, strScore);
+	ObjText_SetHorizontalAlignment(objScore, ALIGNMENT_CENTER);
+	ObjText_SetMaxWidth(objScore, 300);
+	ObjText_SetFontSize(objScore, 32);
+	ObjText_SetFontBold(objScore, true);
+	ObjText_SetFontColorTop(objScore, 193, 205, 193);
+	ObjText_SetFontColorBottom(objScore, 255, 128, 128);
+	ObjText_SetFontBorderType(objScore, BORDER_FULL);
+	ObjText_SetFontBorderColor(objScore,0, 0, 0);
+	ObjText_SetFontBorderWidth(objScore, 1);
+	Obj_SetRenderPriority(objScore, 0.6);
+	ObjRender_SetX(objScore, (GetStgFrameWidth/2)-150);
+	ObjRender_SetY(objScore, 140);
+	PlaySoundEffect("capture1", 100, GetStgFrameWidth/2);
+	loop(15)
+	{
+		yield;
+	}
+	PlaySoundEffect("capture2", 100, GetStgFrameWidth/2);
+	
+	loop(105){
+		yield;
+		}
+	Obj_Delete(objText);
+	Obj_Delete(objScore);
+}
+
+//----------------------------------------------------
+//FPS表示
+//----------------------------------------------------
+task TCurrentFps()
+{
+	let objText = ObjText_Create();
+	ObjText_SetFontSize(objText, 14);
+	ObjText_SetFontBold(objText, true);
+	ObjText_SetFontColorTop(objText, 160, 160, 255);
+	ObjText_SetFontColorBottom(objText, 64, 64, 255);
+	ObjText_SetFontBorderType(objText, BORDER_FULL);
+	ObjText_SetFontBorderColor(objText,255, 255, 255);
+	ObjText_SetFontBorderWidth(objText, 2);
+	ObjText_SetHorizontalAlignment(objText, ALIGNMENT_RIGHT);
+	ObjText_SetMaxWidth(objText, GetScreenWidth() - 8);
+	Obj_SetRenderPriority(objText, 1.0);
+	ObjRender_SetX(objText, 0);
+	ObjRender_SetY(objText, GetScreenHeight() - 20);
+
+	loop
+	{
+		let fps = GetCurrentFps();
+		let text = vtos("1.2f", fps) ~ "fps";
+		ObjText_SetText(objText, text);
+		yield;
+	}
+}
+
+task TReplayFps()
+{
+	if(!IsReplay()){return;}
+
+	let objText = ObjText_Create();
+	ObjText_SetFontSize(objText, 12);
+	ObjText_SetFontBold(objText, true);
+	ObjText_SetFontColorTop(objText, 128, 128, 255);
+	ObjText_SetFontColorBottom(objText, 64, 64, 255);
+	ObjText_SetFontBorderType(objText, BORDER_FULL);
+	ObjText_SetFontBorderColor(objText,255, 255, 255);
+	ObjText_SetFontBorderWidth(objText, 1);
+	Obj_SetRenderPriority(objText, 1.0);
+
+	let px = GetStgFrameLeft() + GetStgFrameWidth() - 18;
+	let py = GetStgFrameTop() + GetScreenHeight() - 14;
+	ObjRender_SetX(objText, px);
+	ObjRender_SetY(objText, py);
+
+	loop
+	{
+		let fps = GetReplayFps();
+		let text = vtos("02d", fps);
+		ObjText_SetText(objText, text);
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//ユーティリティ
+//----------------------------------------------------
+function DigitToArray(let digit,let count)
+{
+	let res = [];
+	digit = truncate(digit);
+
+	loop
+	{
+		let tnum = truncate(digit % 10);
+		digit /= 10;
+		res = [tnum] ~ res;
+		if(truncate(digit) == 0){break;}
+	}
+
+	loop(max(0, count - length(res)))
+	{
+		res = [0] ~ res;
+	}
+
+	return res;
+}

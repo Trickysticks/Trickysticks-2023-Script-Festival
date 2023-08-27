@@ -1,0 +1,105 @@
+// Wish lib functions, used for the Byakuren script.
+
+#include"./Event_Const.dnh"
+
+/*
+@Event {
+	alternative(GetEventType())
+	case(EV_BYAK_AURA) {
+		//let eventParam = GetEventArgument(0);
+		let obj = GetEventArgument(0);
+		let intro = GetEventArgument(1);
+		let silhouette = GetEventArgument(2);
+
+		CheckForAura(obj, intro, silhouette);
+	}
+}*/
+
+let bpm = 174;
+let sampleRate = 48000;
+let beatSamples = floor(sampleRate * 60 / bpm);
+let sample_offset = 0; //136506, Felis; 98152, Scarlet Rose
+//let difficulty = GetCommonData("Diff",1);
+
+function GetBGMSampleRate() {
+	NotifyEventAll(EV_MUSIC_INFO, INFO_SAMPLE_RATE);
+	return GetCommonData("BGM INFO",-1);
+}
+
+//Warning: the below functions might break replays if you use them!!
+function GetBGMTime() {
+	NotifyEventAll(EV_MUSIC_INFO, INFO_POSITION);
+	return GetCommonData("BGM INFO",-1);
+}
+
+function GetBGMSample() {
+	NotifyEventAll(EV_MUSIC_INFO, INFO_POSITION_SAMPLE);
+	return GetCommonData("BGM INFO",-1);
+}
+
+function GetCurrentBeat() {
+	return (GetBGMSample() - sample_offset) / beatSamples;
+}
+
+function RefreshSampleRate() {
+	sampleRate = GetBGMSampleRate();
+}
+
+function waitUntilBeat(beat) {
+	while(GetCurrentBeat() < beat) {
+		yield;
+	}
+}
+
+function setBPM(new_bpm, offset) {
+	bpm = new_bpm;
+	sample_offset = offset;
+	beatSamples = floor(sampleRate * 60 / bpm);
+}
+
+function _Difficulty {
+	return GetCommonData("Diff",1);
+}
+
+function lengthdir_x(ang,len) {
+	return len * cos(ang);
+}
+
+function lengthdir_y(ang,len) {
+	return len * sin(ang);
+}
+
+function moveRandom(obj,frames) {
+	let moveX = 0;
+	let moveY = 0;
+	let centerX = GetStgFrameWidth/2;
+	if (ObjMove_GetX(obj) > centerX) {
+		moveX = rand(centerX - 100,centerX + 50);
+	}
+	else {
+		moveX = rand(centerX - 50,centerX + 100);
+	}
+	if (ObjMove_GetY(obj) > 90) {
+		moveY = rand(70,90);
+	}
+	else {
+		moveY = rand(90,110);
+	}
+	ObjMove_SetDestAtFrame(obj,moveX,moveY,frames); //30
+}
+
+/*
+function sign(n) {
+	if (n > 0) {
+		return 1;
+	}
+	else if (n < 0) {
+		return -1;
+	}
+	return 0;
+}*/
+
+function ByakurenAura_on(obj, intro, silhouette) {
+	NotifyEventAll(EV_BYAK_AURA, obj, intro, silhouette);
+}
+

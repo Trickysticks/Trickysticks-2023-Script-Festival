@@ -1,0 +1,183 @@
+// ECL wrappers for ObjPatternShot functions
+
+// REMINDER TO USE NO_CHANGE, NOT -999999.0f!!
+
+//Reference for ObjPatternShot here:
+// https://github.com/Natashi/Touhou-Danmakufu-ph3sx-2/blob/b3ac54e7df65357a29c5ecddcefbb703d73f7280/New%20Functions%20Documentation.txt#L3144
+
+// NOTE FOR THOSE USING OTHER SHOT SHEETS: LOOK AT AND CHANGE *ANYTHING* INVOLVING SHOT GRAPHICS UNLESS YOU'RE USING THE UNL SHOT SHEET!!
+
+function etCreate() { return ObjPatternShot_Create(); }
+
+function etOn(et) { ObjPatternShot_Fire(et); }
+
+//Fires the shot pattern defined by the given shot pattern object and returns the IDs of the created shots in an array.
+
+function etOn_ret(et) { return ObjPatternShot_FireReturn(et); }
+
+//Sets the parent object of the given shot pattern object.
+
+function etParent(et, obj) { ObjPatternShot_SetParentObject(et, obj); }
+
+/*
+Sets the firing pattern of the given shot pattern object.
+			Available pattern types:
+				PATTERN_FAN
+				PATTERN_FAN_AIMED
+				PATTERN_RING
+				PATTERN_RING_AIMED
+				PATTERN_ARROW
+				PATTERN_ARROW_AIMED
+				PATTERN_POLYGON
+				PATTERN_POLYGON_AIMED
+					- [way]:    Number of polygon vertices.
+					- [stack]:  Number of shots per sides.
+					- [angle argument]:	Edge skip, should normally be 1. Other values may result in polygrams.
+					- [speed argument]:	No effect.
+				PATTERN_ELLIPSE
+				PATTERN_ELLIPSE_AIMED
+					- [stack]:  No effect.
+					- [angle argument]:	Angle of the ellipse. (Not of the shots)
+					- [base speed]:     Max speed at the ends of the primary axis.
+					- [speed argument]:	Max speed at the ends of the secondary axis.
+				PATTERN_SCATTER_ANGLE
+				PATTERN_SCATTER_SPEED
+				PATTERN_SCATTER
+*/
+
+function etAim(et, aim) { ObjPatternShot_SetPatternType(et, aim); }
+
+/*
+Description:
+			Sets the shot type of the given shot pattern object.
+			Supported types:
+				OBJ_SHOT
+				OBJ_LOOSE_LASER
+				OBJ_CURVE_LASER
+*/
+
+function etType(et, type) { ObjPatternShot_SetShotType(et, type); }
+
+//See ObjRender_SetBlendType for the list of blend types.
+
+function etBlend(et, bm) { ObjPatternShot_SetInitialBlendMode(et, bm); }
+
+function etCount(et, ct1, ct2) { ObjPatternShot_SetShotCount(et, ct1, ct2); }
+
+function etSpeed(et, s1, s2) { ObjPatternShot_SetSpeed(et, s1, s2); }
+
+function etAngle(et, a1, a2) { ObjPatternShot_SetAngle(et, a1, a2); }
+
+//Use PATTERN_BASEPOINT_RESET in either arguments to reset it to the parent object's position.
+
+function etOffsetAbs(et, x, y) { ObjPatternShot_SetBasePoint(et, x, y); }
+
+function etOffset(et, x, y) { ObjPatternShot_SetBasePointOffset(et, x, y); }
+
+function etOffsetRad(et, ang, r) { ObjPatternShot_SetBasePointOffsetCircle(et, ang, r); }
+
+function etDist(et, rad) { ObjPatternShot_SetShootRadius(et, rad); }
+
+function etDelay(et, d) { ObjPatternShot_SetDelay(et, d); }
+
+function etSprite(et, type, color) { ObjPatternShot_SetGraphic(et, type[color]); } //Note: array implementation ONLY MEANT TO WORK WITH UNL SHOT SHEET!
+
+function etLaser(et, width, len) { ObjPatternShot_SetLaserParameter(et, width, len); }
+
+function etCopy(et1, et2) { ObjPatternShot_CopySettings(et2, et1); }
+
+//function etEx(et, type, s1, s2, s3, s4, f1, f2, f3, f4) {}
+
+/*
+Transform reference:
+				TRANSFORM_WAIT
+					- Delays the next transformation for S0 frames.
+				TRANSFORM_ADD_SPEED_ANGLE
+					- In S1 frames, sets acceleration to f0 and angular velocity to f1 to the bullet for S0 frames.
+				TRANSFORM_ANGULAR_MOVE
+					- For S0 frames, sets movement angular velocity to f0 and graphic angular velocity to f1.
+				TRANSFORM_N_DECEL_CHANGE
+					- For S1 times, decelerates/accelerates the bullet to a complete halt in S0 frames. (See: Aunn's first spell)
+						Movement will then change depending on S2.
+							- 0: Changes the movement angle to f1.
+							- 1: Increments the movement angle by f1.
+							- 2: Aims to the player with an added randomness factor of -f1 to f1.
+							- 3: Aims to the player with an increment of f1.
+							- 4: Angle becomes random.
+							- 5, other: No angle change.
+						All modes sets the speed to f0.
+						Will also delay the next transformation by (S0 * S1) frames.
+				TRANSFORM_GRAPHIC_CHANGE
+					- Changes the shot graphic to S0.
+				TRANSFORM_BLEND_CHANGE
+					- Changes the shot blend type to S0.
+				TRANSFORM_TO_SPEED_ANGLE
+					- Changes the shot's speed and angle to f0 and f1 in S0 frames.
+						Setting f1 to TOPLAYER_CHANGE will cause the target angle to be the angle to the player object.
+						Setting f0 or f1 to NO_CHANGE will cause the speed/angle to not change.
+				TRANSFORM_ADDPATTERNA1
+					- ObjMove_AddPatternA1(obj, S0, f0, f1);
+				TRANSFORM_ADDPATTERNA2
+					- Should be combined with TRANSFORM_ADDPATTERNA1, as the speed and angle parameters will not be set by this transform.
+					- ObjMove_AddPatternA4(obj, S0, x, x, f0, f1, f2, S2, S1);
+*/
+
+function etEx_Wait(et, frames) { ObjPatternShot_AddTransform(et, TRANSFORM_WAIT, frames); }
+
+function etEx_Accel(et, frames, wt, accel, angvel) { ObjPatternShot_AddTransform(et, TRANSFORM_ADD_SPEED_ANGLE, frames, wt, accel, angvel); }
+
+function etEx_Angvel(et, frames, angvel, spin) { ObjPatternShot_AddTransform(et, TRANSFORM_ANGULAR_MOVE, frames, angvel, spin); }
+
+function etEx_Step(et, t, frames, type, nan, arg) { ObjPatternShot_AddTransform(et, TRANSFORM_N_DECEL_CHANGE, t, frames, type, nan, arg); }
+
+function etEx_Sprite(et, type, color) { ObjPatternShot_AddTransform(et, TRANSFORM_GRAPHIC_CHANGE, type[color]); } //Note: array implementation ONLY MEANT TO WORK WITH UNL SHOT SHEET!
+
+function etEx_Blend(et, bm) { ObjPatternShot_AddTransform(et, TRANSFORM_BLEND_CHANGE, bm); }
+
+function etEx_SpeedAngle(et, frames, sp, ang) { ObjPatternShot_AddTransform(et, TRANSFORM_TO_SPEED_ANGLE, frames, sp, ang); }
+
+function etEx_A1(et, frames, sp, ang) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_A1, frames, sp, ang); }
+
+function etEx_A2(et, frames, sp, ang, accel, angvel, maxsp) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_A2, frames, sp, ang, accel, angvel, maxsp, NO_CHANGE, NO_CHANGE); }
+
+function etEx_A3(et, frames, sp, ang, accel, angvel, maxsp, graphic) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_A2, frames, sp, ang, accel, angvel, maxsp, NO_CHANGE, graphic); }
+
+function etEx_A4(et, frames, sp, ang, accel, angvel, maxsp, target, graphic) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_A2, frames, sp, ang, accel, angvel, maxsp, target, graphic); }
+
+function etEx_B1(et, frames, xsp, ysp) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_B1, frames, xsp, ysp); }
+
+function etEx_B3(et, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_B2, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed, NO_CHANGE); }
+
+function etEx_B3(et, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed, graphic) { ObjPatternShot_AddTransform(et, TRANSFORM_ADDPATTERN_B2, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed, graphic); }
+
+//Set variations
+
+//Sets transformation to the specified transform index.
+
+function etExSet_Wait(et, i, frames) { ObjPatternShot_AddTransform(et, i, TRANSFORM_WAIT, frames); }
+
+function etExSet_Accel(et, i, frames, wt, accel, angvel) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADD_SPEED_ANGLE, frames, wt, accel, angvel); }
+
+function etExSet_Angvel(et, i, frames, angvel, spin) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ANGULAR_MOVE, frames, angvel, spin); }
+
+function etExSet_Step(et, i, t, frames, type, nan, arg) { ObjPatternShot_AddTransform(et, i, TRANSFORM_N_DECEL_CHANGE, t, frames, type, nan, arg); }
+
+function etExSet_Sprite(et, i, type, color) { ObjPatternShot_AddTransform(et, i, TRANSFORM_GRAPHIC_CHANGE, type[color]); } //Note: array implementation ONLY MEANT TO WORK WITH UNL SHOT SHEET!
+
+function etExSet_Blend(et, i, bm) { ObjPatternShot_AddTransform(et, i, TRANSFORM_BLEND_CHANGE, bm); }
+
+function etExSet_SpeedAngle(et, i, frames, sp, ang) { ObjPatternShot_AddTransform(et, i, TRANSFORM_TO_SPEED_ANGLE, frames, sp, ang); }
+
+function etExSet_A1(et, i, frames, sp, ang) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_A1, frames, sp, ang); }
+
+function etExSet_A2(et, i, frames, sp, ang, accel, angvel, maxsp) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_A2, frames, sp, ang, accel, angvel, maxsp, NO_CHANGE, NO_CHANGE); }
+
+function etExSet_A3(et, i, frames, sp, ang, accel, angvel, maxsp, graphic) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_A2, frames, sp, ang, accel, angvel, maxsp, NO_CHANGE, graphic); }
+
+function etExSet_A4(et, i, frames, sp, ang, accel, angvel, maxsp, target, graphic) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_A2, frames, sp, ang, accel, angvel, maxsp, target, graphic); }
+
+function etExSet_B1(et, i, frames, xsp, ysp) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_B1, frames, xsp, ysp); }
+
+function etExSet_B2(et, i, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_B2, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed, NO_CHANGE); }
+
+function etExSet_B3(et, i, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed, graphic) { ObjPatternShot_AddTransform(et, i, TRANSFORM_ADDPATTERN_B2, frames, xsp, ysp, xaccel, yaccel, maxxspeed, maxyspeed, graphic); }

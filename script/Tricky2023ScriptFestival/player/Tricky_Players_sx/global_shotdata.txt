@@ -1,0 +1,91 @@
+shot_image  = "./texture/shotsheet.png"
+
+//Tricky
+ShotData { id = 2   rect = (40, 88, 64, 112)    alpha= 192 collision = 12 } // Rock Shot
+ShotData { id = 3   rect = (0, 88, 40, 128)     alpha= 192 collision = 20 } // Rock Shot Big
+ShotData { id = 7   rect = (64, 88, 128, 152)   alpha= 192 collision = 32 } // Bomb Earth
+ShotData { id = 8   rect = (432, 0, 496, 64)    alpha= 192 collision = 32 fixed_angle = true } // Invert Blue Ball 
+ShotData { id = 9   rect = (432, 64, 496, 128)  alpha= 192 collision = 32 fixed_angle = true } // Green Ball
+ShotData { id = 10 	rect = (496, 0, 512, 256)   alpha= 256 collision = 32 } // Blue Laser
+ShotData { id = 11 	rect = (0, 0, 24, 24)       alpha= 128 collision = 14 render = ADD_ARGB } // Main Shot Delete
+
+ShotData { id = 1   rect = (0, 0, 24, 24)       alpha= 96  collision = 14 render = ADD_ARGB // Main Shot
+	AnimationData{
+		animation_data = ( 1, 0, 0, 24, 24 )
+		animation_data = ( 1, 24, 0, 48, 24 )
+		animation_data = ( 1, 48, 0, 72, 24 )
+		animation_data = ( 1, 72, 0, 96, 24 )
+	}
+} 
+
+ShotData { id = 4   rect = (128, 88, 160, 120)  alpha= 192 collision = 16 // Water Shot
+	AnimationData{
+		animation_data = ( 3, 128, 88, 160, 120 )
+		animation_data = ( 3, 160, 88, 192, 120 )
+		animation_data = ( 3, 192, 88, 224, 120 )
+		animation_data = ( 3, 224, 88, 256, 120 )
+	}
+} 
+
+ShotData {	id = 6  rect = (0, 24, 24, 88)      alpha= 192 collision = 32 render = ADD_ARGB // Bomb Wind
+	AnimationData{
+		animation_data = ( 2, 0, 24, 64, 88 )
+		animation_data = ( 2, 64, 24, 128, 88 )
+		animation_data = ( 2, 128, 24, 192, 88 )
+		animation_data = ( 2, 192, 24, 256, 88 )
+	}
+} 
+
+//Cole-----------------
+
+ShotData { id = 101 rect = (96, 0, 120, 24)     alpha= 128 collision = 14 } //MainShot pink
+ShotData { id = 102 rect = (120, 0, 144, 24)    alpha= 128 collision = 14 } //MainShot red
+ShotData { id = 103 rect = (144, 0, 160, 24)    alpha= 128 collision = 14 } //vine 1
+ShotData { id = 104 rect = (160, 0, 176, 24)    alpha= 128 collision = 14 } //vine 2
+ShotData { id = 105 rect = (176, 0, 192, 24)    alpha= 128 collision = 14 } //vine 3
+ShotData { id = 106 rect = (192, 0, 216, 24)    alpha= 96  collision = 14 angular_velocity = rand(-6, 6) } //Rose Petal
+ShotData { id = 107 rect = (472, 128, 496, 176) alpha= 255 collision = 20 } //Roset Launcher
+ShotData { id = 108 rect = (192, 0, 216, 24)    alpha= 156 collision = 14 angular_velocity = rand(-6, 6) } //Rose Petal2
+ShotData { id = 109 rect = (368, 0, 432, 64)    alpha= 192 collision = 64 fixed_angle = true } //Orange Ball
+ShotData { id = 110 rect = (216, 0, 240, 24)    alpha= 192 collision = 14 render = ADD_ARGB } //green seed
+ShotData { id = 111 rect = (240, 0, 264, 24)    alpha= 192 collision = 14 render = ADD_ARGB } //purple seed
+ShotData { id = 112 rect = (264, 0, 288, 24)    alpha= 192 collision = 14 render = ADD_ARGB } //petal 3
+
+//Ashley--------------
+
+ShotData { id = 201 rect = (264, 24, 288, 48)   alpha= 128 collision = 14 } //MainShot 
+
+ShotData { id = 224 rect = (264, 24, 288, 48)   alpha= 232 collision = 14 } //MainShot Laser
+
+ShotData { id = 220 rect = (120, 0, 144, 24) 	alpha= 128 collision = 14 //Fire Bullet ORANGE
+	AnimationData{
+		animation_data = ( 2, 288, 0, 312, 40 )
+		animation_data = ( 2, 312, 0, 336, 40 )
+		animation_data = ( 2, 336, 0, 360, 40 )
+	}
+} 
+
+ShotData { id = 221 rect = (120, 0, 144, 24)    alpha= 128 collision = 14 //Fire Bullet RED WHOLE
+	AnimationData{
+		animation_data = ( 2, 288, 40, 312, 80 )
+		animation_data = ( 2, 312, 40, 336, 80 )
+		animation_data = ( 2, 336, 40, 360, 80 )
+	}
+} 
+
+
+ShotData { id = 222	rect = (120, 0, 144, 24) 	alpha= 256 collision = 14 //Fire Bullet ORANGE WHOLE
+	AnimationData{
+		animation_data = ( 2, 288, 0, 312, 40 )
+		animation_data = ( 2, 312, 0, 336, 40 )
+		animation_data = ( 2, 336, 0, 360, 40 )
+	}
+} 
+
+ShotData { id = 223 rect = (120, 0, 144, 24) 	alpha= 256 collision = 14 //Fire Bullet RED WHOLE 
+	AnimationData{
+		animation_data = ( 2, 288, 40, 312, 80 )
+		animation_data = ( 2, 312, 40, 336, 80 )
+		animation_data = ( 2, 336, 40, 360, 80 )
+	}
+} 

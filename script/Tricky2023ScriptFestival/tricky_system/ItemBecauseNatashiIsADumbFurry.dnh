@@ -1,0 +1,6 @@
+@Initialize {
+}
+
+@MainLoop {
+  yield;
+}

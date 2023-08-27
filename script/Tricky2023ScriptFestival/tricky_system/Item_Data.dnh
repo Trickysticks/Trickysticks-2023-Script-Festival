@@ -1,0 +1,22 @@
+#UserItemData
+
+item_image = GetCurrentScriptDirectory ~ "img/item.png"
+
+ItemData { //Power Item
+	id=1
+	value=1
+	rect=(0,0,32,32)
+	out=(0,33,32,61)
+}
+ItemData { //Point Item
+	id=2
+	value=2
+	rect=(32,0,64,32)
+	out=(32,33,64,61)
+}
+ItemData { //Balance Item
+	id=3
+	value=3
+	rect=(64,0,96,32)
+	out=(64,33,96,61)
+}

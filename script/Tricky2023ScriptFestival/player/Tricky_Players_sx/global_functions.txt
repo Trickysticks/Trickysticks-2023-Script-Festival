@@ -1,0 +1,573 @@
+task renderHitbox() {
+	float alpha = 0;
+	float spin = 0;
+	ObjPrim_SetTexture(hitboxObj, HITBOX);
+	ObjRender_SetBlendType(hitboxObj, BLEND_ALPHA);
+	Obj_SetRenderPriorityI(hitboxObj, 75);
+	ObjRender_SetAlpha(hitboxObj,0);
+	ObjRender_SetScaleXYZ(hitboxObj, 1, 1, 0);
+	ObjSprite2D_SetSourceRect(hitboxObj, 0, 0, 64, 64);
+	ObjSprite2D_SetDestRect(hitboxObj, -31, -31, 32, 32);
+	loop
+	{
+		ObjRender_SetPosition(hitboxObj, GetPlayerX(), GetPlayerY(), 0);
+		ObjRender_SetAngleZ(hitboxObj, spin);
+		ObjRender_SetAlpha(hitboxObj, alpha);
+		if(isFocus) {
+			alpha = 255;
+		}
+		else {
+			alpha = 0;
+		}
+		spin += 2;
+		yield;
+	}
+}
+
+task TImage(){
+	yield;
+	ObjSprite2D_SetSourceRect(objPlayer, 0, 0, 64, 64);
+	if(GetPlayerID() != "TrickySnY") {ObjSprite2D_SetDestCenter(objPlayer);}
+	else{ ObjSprite2D_SetDestRect(objPlayer, -32, -26, 32, 38); }
+	
+	loop{
+		if(VKeyPressed(VK_LEFT)){
+			ascent(i in 0..2){
+				if(aFrame1 >= 6*i && aFrame1 < 6*i+6){ ObjSprite2D_SetSourceRect(objPlayer, 64*i, 128, 64*i+64, 192); }
+			}
+			if(aFrame1 >= 12){ ObjSprite2D_SetSourceRect(objPlayer, 128, 128, 192, 192); }
+			aFrame2 = 0;
+		}
+		else if(VKeyPressed(VK_RIGHT)){
+			ascent(i in 0..2){
+				if(aFrame1 >= 6*i && aFrame1 < 6*i+6){ ObjSprite2D_SetSourceRect(objPlayer, 64*i, 192, 64*i+64, 256); }
+			}
+			if(aFrame1 >= 12){ ObjSprite2D_SetSourceRect(objPlayer, 128, 192, 192, 256); }
+			aFrame2 = 0;
+		}
+		else{
+			ascent(i in 0..2){
+				ascent(j in 0..3){
+					if(aFrame2 >= 12*i+j*4 && aFrame2 < 12*i+j*4+4){ ObjSprite2D_SetSourceRect(objPlayer, 64*j, 64*i, 64*j+64, 64*i+64); }
+				}
+			}
+			aFrame1 = 0;
+		}
+		aFrame1++;
+		aFrame2++;
+		aFrame2 %= 24;
+		yield;
+	}
+}
+
+task TMagicCircle
+{
+	//無敵時間の魔法陣
+	//頂点奇数：偶数：円の外側、円の内側
+	int countVertex = 64;
+	float[] listRadius = [];
+	loop(countVertex)
+	{
+		listRadius = listRadius ~ [0];
+	}
+
+	string path = CSD ~ "./texture/Default_Player_MagicCircle.png";
+	int obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(obj, countVertex);
+	ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+	Obj_SetRenderPriority(obj, 0.60);
+	ObjPrim_SetTexture(obj, path);
+	ascent(iVert in 0..countVertex / 2)
+	{
+		int left = iVert * 128;
+		int indexVert = iVert * 2;
+		ObjPrim_SetVertexUVT(obj, indexVert + 0, left, 0);
+		ObjPrim_SetVertexUVT(obj, indexVert + 1, left, 64);		
+	}
+
+	float cx = 0;
+	float cy = 0;
+	float maxRadius = 128;
+	float alpha = 0;
+	float frame = 0;
+	float angleRender = 0;
+	float frameInvOld = 0;
+
+	while(true)
+	{
+		int frameInv = GetPlayerInvincibilityFrame();
+
+		if(frameInv <= 0)
+		{
+			Obj_SetVisible(obj, false);
+			frameInvOld = 0;
+		}
+		else
+		{
+			if(frameInvOld == 0)
+			{
+				//初期化
+				ascent(iVert in 0..countVertex)
+				{
+					listRadius[iVert] = 0;
+				}
+				alpha = 0;
+				frame = 0;
+			}
+			frameInvOld = frameInv;
+
+			float px = GetPlayerX();
+			float py = GetPlayerY();
+
+			alpha += 1 / 120;
+			alpha = min(alpha, 1);
+			angleRender += 360 / countVertex / 2;
+			Obj_SetVisible(obj, true);
+
+			frameInv = min(100, frameInv);
+			float rRate = frameInv / 100;
+
+			ascent(iVert in 0..countVertex / 2)
+			{
+				float indexVert = iVert * 2;
+				float angle = 360 / (countVertex / 2 - 1) * iVert;
+
+				float vx1 = listRadius[indexVert] * cos(angle);
+				float vy1 = listRadius[indexVert] * sin(angle);
+				ObjPrim_SetVertexPosition(obj, indexVert + 0, vx1, vy1, 0);
+
+				float vx2 = listRadius[indexVert+1] * cos(angle);
+				float vy2 = listRadius[indexVert+1] * sin(angle);
+				ObjPrim_SetVertexPosition(obj, indexVert + 1, vx2, vy2, 0);
+
+				//魔方陣拡大
+				if(frame >= 0)
+				{//外側
+					float dr = (maxRadius * rRate - listRadius[indexVert]) / 8;
+					listRadius[indexVert] = listRadius[indexVert] + dr;
+				}
+				if(frame > 10)
+				{//内側
+					float rRateIn = rRate - 0.12;
+					if(rRateIn < 0){rRateIn=0;}
+					float dr = (maxRadius * rRateIn - listRadius[indexVert + 1]) / 16;
+					listRadius[indexVert + 1] = listRadius[indexVert + 1] + dr;
+				}
+
+			}
+
+			ObjRender_SetColor(obj, 192 * alpha, 192 * alpha, 255 * alpha);
+			ObjRender_SetPosition(obj, px, py, 0);
+			ObjRender_SetAngleZ(obj, angleRender);
+
+			frame++;
+		}
+
+		yield;
+	}
+}
+
+task CreateGrazeParticle {
+	int objParticle = ObjPrim_Create(OBJ_SPRITE_2D);
+	float startx = GetPlayerX();
+	float starty = GetPlayerY();
+	float angle = rand(0, 360);
+	float[] anglecomponents = [cos(angle), sin(angle)];
+	float speed = rand(20, 48);
+	int frames = 20;
+	float size = rand(3, 6);
+	curr_graze_particles += 1;
+	ObjPrim_SetTexture(objParticle, grPart);
+	ObjSprite2D_SetSourceRect(objParticle, 0, 0, size, size);
+	ObjSprite2D_SetDestCenter(objParticle);
+	Obj_SetRenderPriorityI(objParticle, 60);
+	ObjRender_SetAngleZ(objParticle, rand(0, 360));
+	ascent(i in 0..frames) {
+		float dist = Interpolate_Decelerate(0, speed, i/20);
+		float sc = Interpolate_Linear(1, 0, i/20);
+		
+		ObjRender_SetPosition(objParticle, 
+			startx + anglecomponents[0] * dist,
+			starty + anglecomponents[1] * dist,
+			0);
+		
+		ObjRender_SetScaleXYZ(objParticle, sc, sc, 0);
+		
+		yield;
+	}
+	Obj_Delete(objParticle);
+	curr_graze_particles -= 1;
+}
+
+task TExplosion
+{
+	int obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+	Obj_SetRenderPriorityI(obj, 60);
+	ObjPrim_SetTexture(obj, exPart);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 64, 64);
+	ObjSprite2D_SetDestRect(obj, -32, -32, 32, 32);
+	ObjRender_SetPosition(obj, GetPlayerX, GetPlayerY, 0);
+
+	ascent(i in 0..30)
+	{
+		float scale = Interpolate_Decelerate(0, 4, i/30);
+		float alpha = Interpolate_Linear(255, 0, i/30);
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task TOption(dir){
+    int objOption = ObjPrim_Create(OBJ_SPRITE_2D);
+    ObjPrim_SetTexture(objOption, optTex);
+    ObjSprite2D_SetSourceRect(objOption, 0, 0, 32, 32);
+    ObjSprite2D_SetDestRect(objOption, -16, -16, 16, 16);
+	Obj_SetRenderPriorityI(objOption, 25);
+	ObjRender_SetScaleXYZ(objOption, 0.6, 0.6, 0);
+	ObjRender_SetBlendType(objOption, BLEND_ALPHA);
+	
+	optionShot(objOption, dir);
+	
+	
+	int abso = absolute(dir);
+	int reg = dir/abso;
+	
+	float PosX; 
+	float PosY;
+	float sc = 0;
+    loop{ 
+		float scale = sz + 0.03 * sin(sc*6);
+		if(GetPlayerState() == STATE_DOWN || GetPlayerState() == STATE_END){ Obj_SetVisible(objOption, false); }
+		else{ Obj_SetVisible(objOption, true); }
+		
+		if (isFocus) { // Focused
+			if (currDist > optDistance[1]) {
+				currDist -= tr/transitionfr;
+			}
+			currDist = max(currDist, optDistance[1]);
+		} 
+		else { // Unfocused
+			if (currDist < optDistance[0]) {
+				currDist += tr/transitionfr;
+			}
+			currDist = min(currDist, optDistance[0]);
+		}
+		
+		ObjRender_SetPosition(objOption, GetPlayerX() + currDist * cos(-90 + 30*dir), GetPlayerY() + currDist * sin(-90 + 30*dir), 0);
+		ObjRender_SetScaleXYZ(objOption, scale, scale, 0);
+		sc++;
+		sc %= 60;
+		
+		if(GetPlayerID == "TrickySnY"){
+			if(isFocus){ ObjPrim_SetTexture(objOption, CSD ~ "./texture/Familliar_Tricky_01.png"); }
+			else { ObjPrim_SetTexture(objOption, CSD ~ "./texture/Familliar_Tricky_02.png"); }
+		}
+        yield;
+    }
+}
+
+task CreateDeleteParticle(int obj, int graphic) {
+	float angle = ObjMove_GetAngle(obj);
+	float[] pos = [ObjMove_GetX(obj), ObjMove_GetY(obj)];
+	if(!IsPermitPlayerShot()) {return;}
+	if(graphic == 3){
+		float ran = rand(0, 360);
+		ascent(i in 0..8){
+			int sh = CreatePlayerShotA1(pos[0], pos[1], 8, ran+i*45, 1.5, 10, 2);
+			ObjShot_SetDeleteFrame(sh, 10);
+			Shrinker(sh);
+		}
+	}
+	else{
+		if(graphic == 1){ graphic = 11; }
+		int objParticle = CreatePlayerShotA1(pos[0], pos[1], 3, angle+rand(-5, 5), 0, 8, graphic);
+		Obj_SetRenderPriorityI(objParticle, 40);
+		ObjRender_SetBlendType(objParticle, BLEND_ADD_ARGB);
+		ascent(i in 0..4) {
+			ObjRender_SetScaleXYZ(objParticle, 1+i/2, 1-0.2*i, 0);
+			ObjRender_SetAlpha(objParticle, 255-64*i);
+			yield;
+		}
+		Obj_Delete(objParticle);
+	}
+}
+task Quake(count, strength)	{
+	loop(count)
+	{
+		Set2DCameraFocusX(GetStgFrameWidth / 2 + rand(-strength, strength));
+		Set2DCameraFocusY(GetStgFrameHeight / 2 + rand(-strength, strength));
+		yield;
+	}
+
+	Reset2DCamera();
+}
+
+task Homer(int shot, int stay, float decelerate, float Spd, float spacc, float MaxSpd, float detector, float homrt, int delay, int delay2){
+	wait(delay);
+	ObjMove_SetSpeed(shot, Spd);
+	ObjMove_SetAcceleration(shot, spacc);
+	ObjMove_SetMaxSpeed(shot, MaxSpd);
+	
+	bool homingbool = false;
+	wait(delay2);
+	for(int i = 0; i < stay && Obj_IsExists(shot); i++){
+		if(0<length(FindVictim)){
+			float targetDist = detector;
+			int targetID = 0;
+			
+			for each(enemy in FindVictim){
+				float enemyX = ObjMove_GetX(enemy);
+				float enemyY = ObjMove_GetY(enemy);
+				if(InsidePlayfield(enemy, 96)){
+					float shotDist = distance(enemyX, ObjMove_GetX(shot), enemyY, ObjMove_GetY(shot));
+					if(shotDist < targetDist){
+						targetDist = shotDist;
+						targetID = enemy;
+						homingbool = true;
+					}
+				}
+			}
+
+			if(homingbool){
+				int f = 0;
+				for(; Obj_IsExists(shot) && Obj_IsExists(targetID) && i < stay; i++){
+					float shotAngle = NormalizeAngle(ObjMove_GetAngle(shot));
+					float targetAngle = NormalizeAngle(atan2(ObjMove_GetY(targetID) - ObjMove_GetY(shot), ObjMove_GetX(targetID) - ObjMove_GetX(shot)));
+					float[] iAngles = InterpolateAnglePair(shotAngle, targetAngle);
+					float	homeRate = Interpolate_Decelerate(0, decelerate, min(homrt, f)/homrt);
+					ObjMove_SetAngle(shot, Interpolate_Linear(iAngles[0], iAngles[1], homeRate));
+					if(f == 180){ decelerate = 0.15; }
+					if(f == 420){ decelerate = 0.4; }
+					f++;
+					yield;
+				}
+				homingbool = false;
+			}
+		}
+		yield;
+	}
+	ObjShot_SetAutoDelete(shot, true);
+}
+
+task Grower(int obj){
+	ascent(i in 0..5){
+		float sc = i/4;
+		ObjRender_SetScaleXYZ(obj, sc, sc, 0);
+		yield;
+	}
+}
+
+task Shrinker(int obj){
+	ascent(i in 0..10){
+		float sc = 1-i/9;
+		ObjRender_SetScaleXYZ(obj, sc, sc, 0);
+		yield;
+	}
+}
+
+task SpellCardCutIn(text){
+	string texture = CSD;
+	int del = 60;
+	alternative(GetPlayerID)
+	case("TrickySnY"){ texture = texture ~ "./texture/Tricky_Portrait_placeholder.png"; }
+	case("ColeSnY"){ 
+		if(isFocus){ texture = texture ~ "./texture/Cole_Portrait_Evil.png"; }
+		else{ texture = texture ~ "./texture/Cole_Portrait.png"; del = 30; }
+	}
+	case("AshleySnY"){ texture = texture ~ "./texture/Ashley_Portrait.png"; }
+	
+	int objCut = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objCut, texture);
+    ObjSprite2D_SetSourceRect(objCut, 0, 0, 256, 512);
+    ObjSprite2D_SetDestRect(objCut, -128, -256, 128, 256);
+	Obj_SetRenderPriorityI(objCut, 79);
+	ObjRender_SetPosition(objCut, LBord + 96, DBord-168, 0);
+	
+	int objT = CreateTextObject(RBord + 32, DBord - 64, text, 24, false, true, 80);
+	ascent(i in 0..30){
+		float sc = Interpolate_Decelerate(1.5, 1, i/29);
+		ObjRender_SetScaleXYZ(objCut, sc, sc, 0);
+		ObjRender_SetAlpha(objCut, Interpolate_Linear(0, 255, i/29) );
+		ObjRender_SetX(objT, Interpolate_Decelerate(RBord + 32, LBord+32, i/29) );
+		yield;
+	}
+	
+	wait(del);
+	ascent(i in 0..30){
+		ObjRender_SetX(objCut, Interpolate_Accelerate(LBord + 96, -160, i/29) );
+		ObjRender_SetAlpha(objT, Interpolate_Linear(255, 0, i/29) );
+		yield;
+	}
+	Obj_Delete(objT);
+	Obj_Delete(objCut);
+}
+
+task SetConcentrateEffect(sx, sy, ex, ey, move_range, graphic, iniScale, iniAlpha, max_alpha, timer, eff_count) {
+	int tmp_obj = ObjText_Create();
+	
+	ObjRender_SetPosition(tmp_obj, ex, ey, 1);
+	
+	loop (eff_count){
+		ChargeEffect_concentrate(sx, sy, tmp_obj, move_range, graphic, iniScale, rand(0, 360), iniAlpha, max_alpha, timer);
+	}
+	Obj_Delete(tmp_obj);
+}
+task SetConcentrateEffect_Track(sx, sy, objTarget, move_range, graphic, iniScale, iniAlpha, max_alpha, timer, eff_count) {
+	loop (eff_count){
+		ChargeEffect_concentrate(sx, sy, objTarget, move_range, graphic, iniScale, rand(0, 360), iniAlpha, max_alpha, timer);
+	}	
+}
+
+task ChargeEffect_concentrate(sx, sy, objTarget, move_range, graphic, iniScale, iniAngle, iniAlpha, max_alpha, timer) {
+	int ID = CreateShotA1(sx, sy, 0, 0, graphic, 0);
+	
+	ObjRender_SetAlpha(ID, iniAlpha);
+	ObjRender_SetBlendType(ID, BLEND_ADD_ARGB);
+	ObjShot_SetDeleteFrame(ID, timer + 30);
+	
+	ObjShot_SetSpellResist(ID, true);
+	ObjShot_SetIntersectionEnable(ID, false);
+	ObjShot_SetAutoDelete(ID, false);
+	
+	ObjRender_SetScaleXYZ(ID, iniScale, iniScale, 1);
+	
+	float dir = (rand(0, 1) > 0.5) * 2 - 1;
+	float tmp_al = 1;
+	
+	float before_x = sx;
+	float before_y = sy;
+	
+	float dir_angle = iniAngle;
+	
+	float add_angle = rand(-4, 4);
+	
+	float ex = ObjRender_GetX(objTarget);
+	float ey = ObjRender_GetY(objTarget);
+	
+	ascent (i in 0..timer) {
+		if (Obj_IsDeleted(ID)){ break; }
+		
+		float _tmp = (i + 1) / timer;
+		
+		float tmp = Interpolate_Decelerate(0, 1, _tmp);
+		float tmp_a = iniAngle + i * add_angle * dir;
+		
+		if (!Obj_IsDeleted(objTarget)) {
+			ex = ObjRender_GetX(objTarget);
+			ey = ObjRender_GetY(objTarget);
+		}
+		
+		float cx = Interpolate_Linear(sx, ex, tmp);
+		float cy = Interpolate_Linear(sy, ey, tmp);
+		
+		float tmp_r = sin(_tmp * 180) * move_range;
+		float tmp_x = cx + tmp_r * cos(tmp_a);
+		float tmp_y = cy + tmp_r * sin(tmp_a);
+		
+		dir_angle = dottheta(before_x, before_y, tmp_x, tmp_y);
+		
+		before_x = tmp_x;
+		before_y = tmp_y;
+		
+		ObjMove_SetPosition(ID, tmp_x, tmp_y);
+		ObjRender_SetAngleZ(ID, dir_angle);
+		
+		if (i > timer - 10) {
+			tmp_al = 1 - (i - (timer - 10) + 1) / 10;
+			ObjRender_SetAlpha(ID, tmp_al*max_alpha);
+		}
+
+		Charge_ShotEffect(tmp_x, tmp_y, tmp_al, 10);
+		yield;
+	}
+	
+	Obj_Delete(ID);
+	
+	task Charge_ShotEffect(x, y, iniAlpha, iniTimer) {
+		int ID_E = CreateShotA1(x, y, 0, 0, graphic, 0);
+		
+		ObjRender_SetBlendType(ID_E, BLEND_ADD_ARGB);
+		ObjShot_SetDeleteFrame(ID_E, iniTimer);
+		
+		ObjShot_SetSpellResist(ID_E, true);
+		ObjShot_SetIntersectionEnable(ID_E, false);
+		ObjShot_SetAutoDelete(ID_E, false);
+		
+		ObjRender_SetScaleXYZ(ID_E, iniScale, iniScale, 1);
+		ObjRender_SetAngleZ(ID_E, dir_angle);
+		
+		descent (i in 0..iniTimer) {
+			ObjRender_SetAlpha(ID_E, (i + 1) / iniTimer * iniAlpha * max_alpha);
+			yield;
+		}
+		
+		Obj_Delete(ID_E);
+	}
+}
+
+function CreateTextObject(mx, my, text, size, bold, border, priority){
+	int obj = ObjText_Create();
+	ObjText_SetText(obj, text);
+	ObjText_SetFontType(obj, "Cuprum");
+	ObjText_SetFontSize(obj, size);
+	ObjText_SetFontBold(obj, bold);
+	ObjText_SetFontColorTop(obj, 255, 255, 255);
+	ObjText_SetFontColorBottom(obj, 64, 128, 192);
+	if(border){
+		ObjText_SetFontBorderType(obj, BORDER_FULL);
+		ObjText_SetFontBorderColor(obj, 0, 0, 0);
+		ObjText_SetFontBorderWidth(obj, 1);
+	}
+	Obj_SetRenderPriorityI(obj, priority);
+	ObjRender_SetX(obj, mx);
+	ObjRender_SetY(obj, my);
+	return obj;
+}
+
+function TurnToAngle(id, speed, angle){
+    float current_angle = ObjMove_GetAngle(id);
+    float target_angle = angle;
+    float adist = AngularDistance(current_angle, target_angle);
+
+    if(absolute(adist) < speed){
+        ObjMove_SetAngle(id, target_angle);
+    }
+    else {
+        if(adist > 0){
+            ObjMove_SetAngle(id, ObjMove_GetAngle(id)+speed);
+        }
+        else if(adist < 0){
+            ObjMove_SetAngle(id, ObjMove_GetAngle(id)-speed);
+        }
+    }
+}
+
+
+function AngleDifference(a, b) {
+    float d = NormalizeAngle(b - a);
+    if (d > 180) { d -= 360; }
+    return d;
+}
+
+function InterpolateAnglePair(a,b){
+	if(b < a - 180){
+		b+=360;
+	}
+	else if(b > a + 180){
+		a+=360;
+	}
+	
+	return[a, b];
+}
+function InsidePlayfield(obj, leeway) {
+	float pX = ObjMove_GetX(obj);
+	float pY = ObjMove_GetY(obj);
+	return LBord-leeway < pX && UBord-leeway < pY && RBord+leeway > pX && DBord+leeway > pY;
+}
+function VKeyPressed(int key){
+	return GetVirtualKeyState(key) == KEY_PUSH || GetVirtualKeyState(key) == KEY_HOLD;
+}

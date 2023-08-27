@@ -1,0 +1,384 @@
+#東方弾幕風[Player]
+#ScriptVersion[3]	
+#ID["AshleySnY"]
+#Title["Ashley"]
+#Text["Ashley player script[r]Unfocused Speed 4.0[r]Focused Speed 1.9[r]Lyos's Gift to Trickee.[r]Player Script by Syoudre.[r]Art by Lobby.[r]Sprite by Mr. Gaberson."]
+#Image["./texture/Ashley_Portrait.png"]
+#include "./global_lib.txt"
+#include "./global_functions.txt"
+
+optDistance = [48, 0];
+float tr = optDistance[0] - optDistance[1];
+currDist = optDistance[0];
+sz = 1;
+optTex = optTex ~ "Familliars_Ashley_01.png";
+int objCrosshair = ID_INVALID;
+
+float unfocusSpeed = 4.0;
+float focusSpeed = 1.9;
+
+
+@Initialize{
+	SetPlayerSpeed(4,1.9);
+	SetPlayerDownStateFrame(60);
+	SetPlayerRebirthFrame(20);
+	SetPlayerAutoItemCollectLine(150);
+	SetPlayerClip(0+3, 0+12, 384-3, 448-8);
+	SetPlayerLife(2);
+	SetPlayerSpell(3);
+	SetPlayerItemScope(48);
+	LoadPlayerShotData(shotPath); 
+	
+	ObjPlayer_AddIntersectionCircleA1(objPlayer, 0, 0, 1, 32); 
+	
+	ObjPrim_SetTexture(objPlayer, CSD ~ "./texture/AshleySprite.png");
+	ObjRender_SetTextureFilterMag(objPlayer, FILTER_POINT);
+	TImage();
+	TCrosshair();
+	TShot();
+	TMagicCircle();
+	renderHitbox();
+	
+	ascent(i in -2..3){
+		if(i != 0){ TOption(i); }
+	}
+}
+
+@MainLoop{
+	isFocus = (VKeyPressed(VK_SLOWMOVE) && GetPlayerState() != STATE_DOWN) ? true : false;
+	FindVictim = GetAllEnemyID;
+	
+	yield;
+}
+
+@Event{
+	alternative(GetEventType())
+	case(EV_GRAZE) 
+	{
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 3);
+		AddScore(100);
+		if (curr_graze_particles < MAX_GRAZE_PARTICLES) {
+			CreateGrazeParticle();
+		}
+	}
+	case(EV_REQUEST_SPELL)
+	{
+		if(GetPlayerSpell > 0)
+		{
+			SetPlayerSpell(GetPlayerSpell-1);
+			SetScriptResult(true);
+			TSpell();
+		}
+		else{
+			SetScriptResult(false);
+		}
+	}
+	case(EV_HIT)
+	{
+		//被弾
+		
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 2);
+		//PlaySoundEffect("DIE");
+		TExplosion();
+		
+	}
+	case(EV_PLAYER_SHOOTDOWN)
+	{
+		//被弾
+		SetForbidPlayerShot(true);
+		
+	}
+	case(EV_PLAYER_REBIRTH)
+	{
+		//復帰
+		SetPlayerSpell(3);
+		SetPlayerInvincibilityFrame(180);
+		SetForbidPlayerShot(false);
+	}
+	case(EV_DELETE_SHOT_PLAYER)
+	{
+		CreateDeleteParticle(GetEventArgument(0), GetEventArgument(2));
+	}
+}
+
+
+
+task TShot(){
+	
+	int shotFrame = 0;
+	loop{
+		if(VKeyPressed(VK_SHOT) && IsPermitPlayerShot()){
+			if(isFocus && shotFrame % 3 == 0){
+				NotifyEvent(SFXSCR, EV_PLAY_SFX, 10);
+				ascent(i in -1..2){
+					CreatePlayerShotA1(GetPlayerX()+ 20*i, GetPlayerY() - 12 + 24*absolute(i), 16, 270-15*i, 8.0, 1, 201);
+				}
+			}
+			else if (!isFocus && shotFrame % 3 == 0){
+				NotifyEvent(SFXSCR, EV_PLAY_SFX, 10);
+				ascent(i in -2..3){
+					CreatePlayerShotA1(GetPlayerX()+5*i, GetPlayerY() - 12+ 6*absolute(i), 16, 270+7.5*i, 3, 1, 201);
+				}
+			}
+			shotFrame++;
+		}
+		else{
+			shotFrame = 0;
+		}
+		yield;
+	}
+}
+
+task optionShot(int obj, int dir){
+	int shotFrame = 0;
+	float pX = 0; float pY = 0;
+	int abs = absolute(dir);
+	loop{
+		pX = ObjRender_GetX(obj); 
+		pY = ObjRender_GetY(obj);
+		if(VKeyPressed(VK_SHOT) && IsPermitPlayerShot()){
+			if(isFocus && shotFrame % 10 == 5*abs-1){
+				NotifyEvent(SFXSCR, EV_PLAY_SFX, 10);
+				int sh = CreatePlayerShotA1(ObjRender_GetX(objCrosshair), ObjRender_GetY(objCrosshair), 0, 0, 1.9, 99, 109);
+				ObjRender_SetAlpha(sh, 48);
+				Obj_SetRenderPriorityI(sh, 49);
+				ObjRender_SetBlendType(sh, BLEND_ADD_ARGB);
+				ObjShot_SetDeleteFrame(sh, 6);
+				ShrinkerAsh(sh);
+			}
+			else if (!isFocus && shotFrame % 2 == abs-1){
+				if(shotFrame%6 == 0){
+					NotifyEvent(SFXSCR, EV_PLAY_SFX, 10);
+				}
+				int sh = CreatePlayerShotA1(pX, pY, 12, 270 + 3.5 * sin(shotFrame*dir * 10), 0.5, 99, 220);
+				ObjMove_AddPatternA2(sh, rand(15, 20), 12, NO_CHANGE, -15/30, 0, 0);
+				Grower(sh);
+				Flames(sh);
+			}
+			shotFrame++;
+		}
+		else{
+			shotFrame = 0;
+		}
+		yield;
+	}
+}
+
+task Flames(obj){
+	wait(37);
+	ObjShot_FadeDelete(obj);
+}
+
+task ShrinkerAsh(int obj){
+	ascent(i in 0..10){
+		float sc = 2-i/4.5;
+		ObjRender_SetScaleXYZ(obj, sc, sc, 0);
+		yield;
+	}
+}
+
+task TSpell(){
+	int i = 0;
+	int t = 0;
+	int objManage = GetSpellManageObject();
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 12);
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 6);
+	SetForbidPlayerShot(true);
+	if(isFocus){
+		SetPlayerSpeed(focusSpeed, focusSpeed);
+		SetPlayerInvincibilityFrame(300);
+		SpellCardCutIn(spellcardNames[2][1]);
+		ascent(i in 0..15){
+			Quake(1, i/6);
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 1);
+			loop(3){
+				float an = 90 + rand(-i*0.75, i*0.75);
+				int sh = CreatePlayerShotA1(GetPlayerX()+16*cos(an), GetPlayerY() + 16 * sin(an), rand(15, 25), an, 10, 9999, 201);
+				ObjShot_SetSpellFactor(sh, true);
+				ObjRender_SetScaleXYZ(sh, 3, 5, 0);
+			}
+			wait(2);
+		}
+		
+		wait(15);
+		ascent(i in 0..20){
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 7);
+			int _i = absolute((i-5) % (2*5) - 5);
+			Quake(3, 5);
+			CreateBulletLaser(GetPlayerX + 40 * sin(i*40), 600, rand(65, 75), 270+1*sin(i*40), 1200, 120, 12.5, 9999, 224, 0, true);
+			
+			if(i % 3 == 0){
+				NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+				NotifyEvent(SFXSCR, EV_PLAY_SFX, 1);
+				float r = rand(0, 360);
+				ascent(j in 0..36){
+					float sp = rand(8, 25);
+					ascent(k in 0..3){
+						int s = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), sp, j*10+r+k*2, 3, 9999, rand(222, 224));
+						ObjShot_SetSpellFactor(s, true);
+						ObjRender_SetBlendType(s, BLEND_ADD_ARGB);
+					}
+				}
+			}
+			wait(5);
+		}
+		descent(i in 0..5){
+			Quake(3, i/4);
+			wait(3);
+		}
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 7);
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 1);
+		Quake(45, 12);
+		ascent(i in -1..2){
+			CreateBulletLaser(GetPlayerX + 60 * i, 600, 55, 270, 1200, 120, 22.5, 9999, 224, 0, true);
+			if(i % 1 == 0){
+				float r = rand(0, 360);
+				ascent(j in 0..36){
+					float sp = rand(3, 14);
+					ascent(k in 0..3){
+						int s = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), sp, j*10+r+k*2, 3, 9999, rand(222, 224));
+						ObjShot_SetSpellFactor(s, true);
+						ObjRender_SetBlendType(s, BLEND_ADD_ARGB);
+					}
+				}
+			}
+		}
+		wait(30);
+		SetPlayerSpeed(unfocusSpeed, focusSpeed);
+		SetForbidPlayerShot(false);
+		wait(15);
+		descent(i in 0..5){
+			Quake(12, i/5);
+			wait(12);
+		}
+		
+	}
+	else{
+		SetPlayerSpeed(unfocusSpeed, unfocusSpeed);
+		SetPlayerInvincibilityFrame(240);
+		SpellCardCutIn(spellcardNames[2][0]);
+		loop(20){
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+			FlameBurst();
+			wait(5);
+		}
+		wait(75);
+		SetForbidPlayerShot(false);
+		SetPlayerSpeed(unfocusSpeed, focusSpeed);
+	}
+	Obj_Delete(objManage);
+}
+
+task TCrosshair()
+{	
+
+	objCrosshair = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objCrosshair, CSD ~ "./texture/Crosshair.png");
+	ObjSprite2D_SetSourceRect(objCrosshair, 0, 0, 128, 128);
+	ObjSprite2D_SetDestRect(objCrosshair, -63, -63, 64, 64);
+	Obj_SetRenderPriorityI(objCrosshair, 25);
+	ObjRender_SetAlpha(objCrosshair, 96);
+	
+	float _i = 0;
+	while( true )
+	{//削除されるまでループを実行		
+		//ホーミング
+		float sx = ObjRender_GetX(objCrosshair);
+		float sy = ObjRender_GetY(objCrosshair);
+		float tx = GetPlayerX();
+		float ty = GetPlayerY()/4.5;
+		while(!isFocus){ 
+			ObjRender_SetPosition(objCrosshair, GetPlayerX(), GetPlayerY()/4.5, 0);
+			ObjRender_SetAlpha(objCrosshair, 0);
+			yield; 
+		}
+		ObjRender_SetAlpha(objCrosshair, 96);
+		float[][] pos = GetEnemyIntersectionPosition(sx, sy, 1);
+		if(length(pos) > 0)
+		{
+			tx = pos[0][0];
+			ty = pos[0][1];
+		}
+		if(tx < -32 || tx > RBord + 32){ tx = GetPlayerX(); }
+		if(ty < -32 || ty > DBord + 32){ ty = GetPlayerY()/4.5; }
+		ObjRender_SetPosition(objCrosshair,
+			Interpolate_Linear(sx, tx, 1/5),
+			Interpolate_Linear(sy, ty, 1/5),
+			0
+		);
+		
+		ObjRender_SetAngleZ(objCrosshair, _i);
+		_i+=8.3;
+		yield;
+	}
+
+}
+
+task FlameBurst(){
+	float pX = rand(32, 352);
+	float pY = rand(32, 416);
+	SetConcentrateEffect(GetPlayerX(), GetPlayerY(), pX, pY, 225, rand(222, 224), 1, 64, 16, 60, 12);
+	wait(60);
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 7);
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 1);
+	Boom(pX, pY, 20, 4, 0);				
+	float r = rand(0, 360);
+	ascent(j in 0..24){
+		int s = CreatePlayerShotA1(pX, pY, rand(8, 20), j*15+r, 4.5, 9999, rand(220, 222));
+		ObjShot_SetSpellFactor(s, true);
+		ObjRender_SetAlpha(s, 192);
+		ObjRender_SetScaleXYZ(s, 5, 3, 0);
+		ObjRender_SetBlendType(s, BLEND_ADD_ARGB);
+	}
+}
+
+task Boom(x, y, sz, pow, type){
+	int sh = CreateShotA1(x, y, 0, 0, 109, 0);
+	
+	ObjShot_SetDamage(sh, pow);
+	ObjShot_SetPenetration(sh, 9999);
+	ObjRender_SetBlendType(sh, BLEND_ADD_ARGB);
+	
+	ObjShot_SetAutoDelete(sh, false);
+	ObjShot_SetEraseShot(sh, true);
+	ObjShot_SetSpellFactor(sh, true);
+	
+	if(type == 1){ObjRender_SetAngleXYZ(sh, rand(0, 360), rand(0, 360), rand(0, 360));}
+	
+	ascent(i in 1..31){
+		float sc = Interpolate_Linear(0, 1, i/30);
+		ObjRender_SetScaleXYZ(sh, sz*sc, sz*sc, 0);
+		ObjRender_SetAlpha(sh, 192-192*sc);
+		ObjShot_SetIntersectionCircleA1(sh, sz*sc*24);
+		yield;
+	}
+	Obj_Delete(sh);
+}
+
+function CreateBulletLaser(pX, pY, spd, ang, leng, width, dmg, penet, graphic, delay, bulleterase){
+	int lsr = ObjShot_Create(OBJ_LOOSE_LASER);
+	ObjShot_Regist(lsr);
+	
+	ObjMove_SetPosition(lsr, pX, pY);
+	ObjMove_SetSpeed(lsr, spd);
+	ObjMove_SetAngle(lsr, ang);
+	ObjShot_SetGraphic(lsr, graphic);
+	ObjShot_SetDelay(lsr, delay);
+	
+	ObjLaser_SetLength(lsr, leng);
+	ObjLaser_SetRenderWidth(lsr, width*1.5);
+	ObjLaser_SetIntersectionWidth(lsr, width);
+	ObjRender_SetAlpha(lsr, 192);
+	
+	ObjShot_SetDamage(lsr, dmg);
+	ObjShot_SetPenetration(lsr, penet);
+	
+	ObjShot_SetAutoDelete(lsr, false);
+	ObjShot_SetEraseShot(lsr, bulleterase);
+	ObjShot_SetSpellFactor(lsr, true);
+	
+	return lsr;
+}

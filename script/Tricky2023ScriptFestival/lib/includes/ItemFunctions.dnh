@@ -1,0 +1,9 @@
+#include "../../tricky_system/Event_Const.dnh"
+
+function CreateItems01(amount, type, x, y, xrandfactor, yrandfactor, score) {
+	NotifyEventAll(EV_CREATE_ITEM,[[0],[amount],[type],[x],[y],[xrandfactor], [yrandfactor], [score]]); 
+}
+
+function CreateItems02(amount, type, x, y, relativexoffset, relativeyoffset, xrandfactor, yrandfactor, score) {
+	NotifyEventAll(EV_CREATE_ITEM,[[1],[amount],[type],[x],[y],[relativexoffset], [relativeyoffset], [xrandfactor], [yrandfactor], [score]]);
+}

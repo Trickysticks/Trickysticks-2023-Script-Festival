@@ -1,0 +1,188 @@
+//一時停止中スクリプト
+
+@Initialize
+{
+	SetAutoDeleteObject(true);
+	TBackground();
+	TMenu();
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+
+task TBackground
+{
+	task TVertex(var index, var left, var top, var right, var bottom)
+	{
+		ObjPrim_SetVertexPosition(obj, index + 0, left, top, 0);
+		ObjPrim_SetVertexPosition(obj, index + 1, left, bottom, 0);
+		ObjPrim_SetVertexPosition(obj, index + 2, right, top, 0);
+		ObjPrim_SetVertexPosition(obj, index + 3, right, top, 0);
+		ObjPrim_SetVertexPosition(obj, index + 4, left, bottom, 0);
+		ObjPrim_SetVertexPosition(obj, index + 5, right, bottom, 0);
+
+		ObjPrim_SetVertexUVT(obj, index + 0, left, top);
+		ObjPrim_SetVertexUVT(obj, index + 1, left, bottom);
+		ObjPrim_SetVertexUVT(obj, index + 2, right, top);
+		ObjPrim_SetVertexUVT(obj, index + 3, right, top);
+		ObjPrim_SetVertexUVT(obj, index + 4, left, bottom);
+		ObjPrim_SetVertexUVT(obj, index + 5, right, bottom);
+
+		//STGシーン内のみアニメーション
+		if(left >= 32 && right <= 416 && top >=16 && bottom <= 464)
+		{
+			let alpha = 255;
+			while(alpha >= 128)
+			{
+				ObjPrim_SetVertexAlpha(obj, index + 0, alpha);
+				ObjPrim_SetVertexAlpha(obj, index + 1, alpha/2);
+				ObjPrim_SetVertexAlpha(obj, index + 2, alpha/2);
+				ObjPrim_SetVertexAlpha(obj, index + 3, alpha/2);
+				ObjPrim_SetVertexAlpha(obj, index + 4, alpha/2);
+				ObjPrim_SetVertexAlpha(obj, index + 5, alpha);
+				alpha -= 255 / frame;
+
+				yield;
+			}
+		}
+	}
+
+	//分割設定
+	let frame = 30;
+	let countH = 20; //分割数
+	let countV = 30; 
+	let width = 640 / countH;
+	let height = 480 / countV;
+	let target = GetTransitionRenderTargetName();
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D); //2D頂点ブジェクト生成
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, countH * countV * 6);
+	Obj_SetRenderPriorityI(obj, 0); //描画優先度を設定
+	ObjPrim_SetTexture(obj, target); //テクスチャを設定
+
+	ascent(ix in 0.. countH)
+	{
+		ascent(iy in 0.. countV)
+		{
+			let index = (ix + iy * countH) * 6;
+			let left = ix * width;
+			let right = left + width;
+			let top = iy * height;
+			let bottom = top + height;
+			TVertex(index, left, top, right, bottom);
+		}
+	}
+
+}
+
+task TMenu
+{
+	let selectIndex = 0;//選択位置
+	task TMenuItem(let index, let mx, let my, let text)
+	{
+		function CreateTextObject(let mx, let my, let text)
+		{
+			let obj = ObjText_Create();
+			ObjText_SetText(obj, text);
+			ObjText_SetFontSize(obj, 20);
+			ObjText_SetFontBold(obj, true);
+			ObjText_SetFontColorTop(obj, 128, 128, 255);
+			ObjText_SetFontColorBottom(obj, 64, 64, 255);
+			ObjText_SetFontBorderType(obj, BORDER_FULL);
+			ObjText_SetFontBorderColor(obj,255, 255, 255);
+			ObjText_SetFontBorderWidth(obj, 2);
+			Obj_SetRenderPriorityI(obj, 10);
+			ObjRender_SetX(obj, mx);
+			ObjRender_SetY(obj, my);
+			return obj;
+		}
+
+		let objText = CreateTextObject(mx, my, text);
+		let objSelect = CreateTextObject(mx, my, text);
+		ObjRender_SetBlendType(objSelect, BLEND_ADD_RGB);
+		loop
+		{
+			Obj_SetVisible(objSelect, index == selectIndex);
+			yield;
+		}
+	}
+
+	//メニュー配置
+	let mx = 48;
+	let my = 32;
+	let texts = ["Save a Replay", "Return to Title", "Retry from the Beginning"];
+	var countMenu = length(texts);
+	ascent(var iText in 0 .. countMenu)
+	{
+		TMenuItem(iText, mx, my, texts[iText]);
+		my += 32;
+	}
+
+	//キー状態がリセットされるまで待機
+	while(GetVirtualKeyState(VK_OK) != KEY_FREE){yield;}
+
+	//メニュー選択処理
+	let frameKeyHold = 0;//キー押しっぱなしフレーム数
+	loop
+	{
+		//決定
+		if(GetVirtualKeyState(VK_OK) == KEY_PULL)
+		{
+			let listResult = [RESULT_SAVE_REPLAY, RESULT_END, RESULT_RETRY];
+			SetScriptResult(listResult[selectIndex]);
+			CloseScript(GetOwnScriptID());
+			return;
+		}
+
+		//カーソル移動
+		if(GetVirtualKeyState(VK_UP) == KEY_PUSH)
+		{
+			selectIndex--;
+		}
+		else if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH)
+		{
+			selectIndex++;
+		}
+		else if(GetVirtualKeyState(VK_UP) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(frameKeyHold == 30 || (frameKeyHold > 30 && (frameKeyHold % 10 == 0)))
+			{
+				selectIndex--;
+			}
+		}
+		else if(GetVirtualKeyState(VK_DOWN) == KEY_HOLD)
+		{
+			frameKeyHold++;
+			if(frameKeyHold == 30 || (frameKeyHold > 30 && (frameKeyHold % 10 == 0)))
+			{
+				selectIndex++;
+			}
+		}
+		else
+		{
+			frameKeyHold = 0;
+		}
+
+		if(selectIndex < 0) 
+		{
+			selectIndex = countMenu - 1;
+		}
+		else
+		{
+			selectIndex %= countMenu;
+		}
+
+		yield;
+	}
+}
+
+
+

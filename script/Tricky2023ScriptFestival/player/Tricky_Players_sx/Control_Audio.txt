@@ -1,0 +1,66 @@
+int seVol = 100;
+
+//SFX globals
+int _objSFX = ObjSound_Create();
+
+string DIR_SE = GetCurrentScriptDirectory() ~ "./sfx/";
+
+int EV_PLAY_SFX = EV_USER_PLAYER+42000;
+int EV_STOP_SFX = EV_USER_PLAYER+42001;
+
+string[] SOUNDS = [
+    //Title
+    /*00*/ DIR_SE ~ "BLAST.wav",
+    /*01*/ DIR_SE ~ "BOOM.wav",
+    /*02*/ DIR_SE ~ "DIE.wav",
+    /*03*/ DIR_SE ~ "GRAZE.wav", 
+    /*04*/ DIR_SE ~ "ICE.wav",
+    /*05*/ DIR_SE ~ "POWER.wav",
+    /*06*/ DIR_SE ~ "se_ch00.wav",
+    /*07*/ DIR_SE ~ "se_enep02.wav",
+    /*08*/ DIR_SE ~ "se_extend2.wav",
+    /*09*/ DIR_SE ~ "SE_GRAZE1.wav",
+    /*10*/ DIR_SE ~ "SHOOT.wav",
+    /*11*/ DIR_SE ~ "SHOT.wav",
+    /*12*/ DIR_SE ~ "SPELL.wav",
+    /*13*/ DIR_SE ~ "sword1.wav",
+    /*14*/ DIR_SE ~ "sword2.wav",
+    /*15*/ DIR_SE ~ "sword3.wav",
+    /*16*/ DIR_SE ~ "type.wav", 
+    /*17*/ DIR_SE ~ "warp.wav",
+	/*18*/ DIR_SE ~ "wind.wav"
+];
+
+@Initialize
+{
+	InitAudio();
+}
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_PLAY_SFX)
+	{
+		let seID = GetEventArgument(0);
+        ObjSound_Load(_objSFX, SOUNDS[seID]);
+        ObjSound_SetVolumeRate(_objSFX, seVol);
+        ObjSound_Play(_objSFX);
+	}
+	case(EV_STOP_SFX)
+	{
+		ObjSound_Stop(_objSFX);
+	}
+}
+
+@MainLoop
+{
+	yield;
+}	
+
+function InitAudio() { //preload all audio files to prevent weird stuttering upon first play
+    //SE
+    ObjSound_SetSoundDivision(_objSFX, SOUND_SE);
+    ascent(i in 0..length(SOUNDS)) {
+        LoadSound(SOUNDS[i]);
+    }
+}

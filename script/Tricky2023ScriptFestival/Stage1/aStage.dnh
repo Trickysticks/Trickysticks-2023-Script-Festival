@@ -1,0 +1,707 @@
+#TouhouDanmakufu[Stage]
+//"Stage 1 - Nippy Nameless Path"
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Stage 1"]
+#Player["./../lib/ColePlayer/Cole.dnh"]
+
+let CSD = GetCurrentScriptDirectory;
+let MD = GetModuleDirectory;
+
+let switch = 1;
+
+let EndStateCalled = false;
+
+let eventhappening = false;
+
+let objmidboss = ObjEnemyBossScene_Create();
+let objmidboss2 = ObjEnemyBossScene_Create();
+let objboss = ObjEnemyBossScene_Create();
+
+let scriptEnemy;
+let scriptBackground;
+
+let midStart = false;
+let mid2Start = false;
+let bossStart = false;
+
+#include "../lib/includes/DialogueConstants.dnh"
+#include "../lib/MirDialogue/MirDialogue.dnh"
+#include "../lib/includes/Function_Audio.dnh"
+#include "../tricky_system/Event_Const.dnh"
+#include "../lib/includes/EffectFunctions.dnh"
+#include "../lib/includes/EnemyFunctions.dnh"
+#include"../lib/includes/LoadingFunctions.dnh"
+//#include "../tricky_system/WishLib.dnh"
+
+//233,147,255
+
+task LoadBosses {
+	//WriteLog("Starting Enemy Boss Scene Loading...");
+	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "Justin0.dnh");
+	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "JustinN1.dnh");
+	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "JustinS1.dnh");
+	ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinN2.dnh");
+	ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinS2.dnh");
+	ObjEnemyBossScene_Add(objboss, 2, CSD ~ "JustinS3.dnh");
+	//WriteLog("Loading in Load Thread...");
+	ObjEnemyBossScene_LoadInThread(objboss);
+}
+
+task LoadMusic {
+	
+}
+	
+@Initialize{
+	
+	if(GetCommonData("Main Game", false)==false){
+		//WriteLog("Not Main Game! Loading stuff again and installing font.");
+		SetPlayerLife(9);
+		InstallFont(CSD ~ "../BNKGOTHM.TTF");
+		LoadAllImagesInFolder(CSD~"../");
+	}
+	
+	//scriptEnemy = LoadScript(GetCurrentScriptDirectory ~ "Enemy.dnh");
+	//StartScript(scriptEnemy);
+	
+	scriptBackground = LoadScript(GetCurrentScriptDirectory ~ "./NamelessPath.dnh");
+	StartScript(scriptBackground);
+	
+	LoadBosses;
+	MenuFadeBG;
+	//FadeOutWhite;
+	SetCommonData("bosshudshow",true);
+	SetCommonData("bosshittable", true);
+	TStage();
+}
+
+@MainLoop{
+	
+	if(GetPlayerState() == STATE_END && EndStateCalled==false){ EndStateCalled = true; StartCloseStgScene; }
+	yield;	
+}
+
+task StartCloseStgScene{
+	wait(180);
+	CloseStgScene();
+}
+
+@Event{
+
+	alternative(GetEventType())	
+	case(EV_PAUSE_ENTER){
+		NotifyEventAll(EV_MUSIC_PAUSE, true);
+	}
+	case(EV_PAUSE_LEAVE){
+		if(!GetCommonData("forcedpause", false)){ NotifyEventAll(EV_MUSIC_RESUME, true); }
+	}
+	case(EV_DIALOGUE){
+		let eventParam = GetEventArgument(0);
+		let type = eventParam;
+		
+		alternative(type)
+		//case(0) { Event0; }
+		case(0) { Event0; }
+		case(1) { Event1; }
+	}
+}
+
+/*
+task testBeatChecker(mtype) {
+	let beatNo = 1;
+	if (mtype == 1.15) { //Adjusts for midboss testing timing:tm:
+		beatNo = 238;
+	}
+	loop {
+		waitUntilBeat(beatNo + 1);
+		//PlaySoundEffect("time1", 90, 384/2); //shot, 90
+		beatNo += 1;
+		WriteLog(ToString(beatNo));
+	}
+}
+
+
+task PopcornAngels(lastBeat) {
+	let beat = GetCurrentBeat();
+	while(beat < lastBeat) {
+		CreateFairy_SmallA1(rand(192-160, 92), rand(-10, -50), 0, randInt(0, 2));
+		beat++;
+		waitUntilBeat(beat);
+		CreateFairy_SmallA1(rand(292, 292+60), rand(-10, -50), 1, randInt(0, 2));
+		beat++;
+		waitUntilBeat(beat);
+	}
+}
+
+task PopcornDemons(lastBeat) {
+	let beat = GetCurrentBeat();
+	waitUntilBeat(beat+1);
+	while(beat < lastBeat) {
+		CreateFairy_SmallA2(rand(192-30, 192+30), rand(-10, -50), randInt(0,2), randInt(0, 2));
+		beat += 2;
+		waitUntilBeat(beat);
+	}
+}
+
+task PopcornWar(lastBeat) {
+	let beat = GetCurrentBeat();
+	while(beat < lastBeat) {
+		if(eventhappening){ return; }
+		CreateFairy_SmallA1(rand(192-160, 92), rand(-10, -50), 0, randInt(0, 2));
+		beat += 0.5;
+		waitUntilBeat(beat);
+		CreateFairy_SmallA1(rand(292, 292+60), rand(-10, -50), 1, randInt(0, 2));
+		CreateFairy_SmallA2(rand(192-30, 192+30), rand(-10, -50), randInt(0,2), randInt(0, 2));
+		beat += 0.5;
+		waitUntilBeat(beat);
+	}
+}
+*/
+
+task TStage{
+	
+	wait(120);
+	
+	PlayMusic(1.1); 
+	
+	wait(210);
+	Title;
+	wait(60);
+	wait(240);
+	SetCommonData("BGSpeed", 0.5);
+	SetShotAutoDeleteClip(32, 40, 32, 32);
+	//
+
+	Event0;
+	//Event0_Short;
+
+	while(!Obj_IsDeleted(objboss)){
+		yield;
+	}
+	wait(120);
+	
+	Event1;
+	eventhappening = true;
+	while(eventhappening){ yield; }
+	FadeOutMusic(120);
+	wait(180);
+	if(GetCommonData("Main Game", false)==true){ CloseStgScene(); }
+	else{
+		CloseScript(scriptBackground);
+		CloseScript(GetOwnScriptID());
+	}
+}
+
+/*
+function CreateFairy_SmallA1(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[1.1,x,y,CSD,color]);
+}
+
+function CreateFairy_SmallA2(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[1.2,x,y,CSD,color]);
+}
+
+function CreateFairy_SmallA3(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[1.3,x,y,CSD,color]);
+}
+
+function CreateFairy_SmallA4(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[1.4,x,y,CSD,color]);
+}
+
+function CreateFairy_MediumA1(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[2.1,x,y,CSD,color]);
+}
+
+function CreateFairy_MediumA2(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[2.2,x,y,CSD,color]);
+}
+
+function CreateFairy_MediumA3(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[2.3,x,y,CSD,color]);
+}
+
+function CreateFairy_LargeA1(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[3.1,x,y,CSD,color]);
+}
+
+function CreateFairy_LargeA2(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[3.2,x,y,CSD,color]);
+}
+
+function CreateFairy_LargeB1(x,y,CSD,color) {
+	NotifyEventAll(EV_SPAWN_ENEMY,[3.3,x,y,CSD,color]);
+}
+
+*/
+
+function SetEnemyLifeToZero{
+	let enm = GetAllEnemyID;
+	ascent(i in 0..length(enm)) {
+		Obj_SetValue(enm[i],"Item",false);
+		ObjEnemy_SetLife(enm[i],0);
+	}
+}
+
+function WaitIfEnemiesOnScreen(w){
+	loop(w){ if(length(GetAllEnemyID)>0){ yield; } }
+}
+
+task Title {
+    let objStar = ObjPrim_Create(OBJ_SPRITE_2D);
+	let logotexture = CSD ~ "sprites/Logo_Tricky_Santa.png";
+	
+    ObjRender_SetBlendType(objStar,BLEND_ALPHA);
+    Obj_SetRenderPriorityI(objStar,90);
+    ObjPrim_SetTexture(objStar, logotexture);
+    ObjSprite2D_SetSourceRect(objStar,0,0,192,192);
+    ObjSprite2D_SetDestCenter(objStar);
+   
+    let objStage = ObjPrim_Create(OBJ_SPRITE_2D);
+    ObjRender_SetBlendType(objStage,BLEND_ALPHA);
+    Obj_SetRenderPriorityI(objStage,90);
+    ObjPrim_SetTexture(objStage, logotexture);
+    ObjSprite2D_SetSourceRect(objStage,192,0,512,128);
+    ObjSprite2D_SetDestCenter(objStage);
+   
+    let objTitle = ObjPrim_Create(OBJ_SPRITE_2D);
+    ObjRender_SetBlendType(objTitle,BLEND_ALPHA);
+    Obj_SetRenderPriorityI(objTitle,90);
+    ObjPrim_SetTexture(objTitle, logotexture);
+    ObjSprite2D_SetSourceRect(objTitle,0,192,512,256);
+    ObjSprite2D_SetDestCenter(objTitle);
+   
+    let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+    ObjRender_SetBlendType(objText,BLEND_ALPHA);
+    Obj_SetRenderPriorityI(objText,90);
+    ObjPrim_SetTexture(objText, logotexture);
+    ObjSprite2D_SetSourceRect(objText,192,128,512,192);
+    ObjSprite2D_SetDestCenter(objText);
+   
+    let x = GetCenterX-15;
+    let y = 140;
+    let alphaStar = 0;
+    let alphaText = 0;
+    let spin = 0;
+   
+    ObjRender_SetScaleXYZ(objStar,0.6,0.6,0.6);
+    ObjRender_SetScaleXYZ(objStage,0.5,0.5,0.5);
+    ObjRender_SetScaleXYZ(objTitle,0.7,0.7,0.7);
+    ObjRender_SetScaleXYZ(objText,0.8,0.8,0.8);
+   
+    loop(270) {
+        if(x>GetCenterX-95) { x-=1; spin-=180/80; alphaStar+=255/80; }
+        else if(alphaText<255){ alphaText+=255/90; }
+        ObjRender_SetAlpha(objStar,alphaStar);
+        ObjRender_SetAlpha(objStage,alphaText);
+        ObjRender_SetAlpha(objTitle,alphaText);
+        ObjRender_SetAlpha(objText,alphaText);
+        ObjRender_SetPosition(objStar,x,y,0);
+        ObjRender_SetPosition(objStage,x,y-3,0);
+        ObjRender_SetPosition(objTitle,GetCenterX+90,120,0);
+        ObjRender_SetPosition(objText,GetCenterX+100,155,0);
+        ObjRender_SetAngleZ(objStar,spin);
+        yield;
+    }
+    loop(90) {
+        ObjRender_SetAlpha(objStar,alphaStar);
+        ObjRender_SetAlpha(objStage,alphaText);
+        ObjRender_SetAlpha(objTitle,alphaText);
+        ObjRender_SetAlpha(objText,alphaText);
+        alphaStar-=255/90;
+        alphaText-=255/90;
+        yield;
+    }
+    Obj_Delete(objStar);
+    Obj_Delete(objStage);
+    Obj_Delete(objTitle);
+    Obj_Delete(objText);
+}
+
+task BossName(name) {
+	let objtext = ObjText_Create;
+	
+	ObjText_SetFontSize(objtext,12);
+	ObjText_SetFontType(objtext, "Bank Gothic MD");
+	ObjText_SetFontBold(objtext, true);
+	ObjText_SetFontColorTop(objtext,255,255,255);
+	ObjText_SetFontColorBottom(objtext,100,0,0);
+	ObjText_SetFontBorderType(objtext,BORDER_FULL);
+	ObjText_SetFontBorderWidth(objtext,1);
+	ObjText_SetFontBorderColor(objtext,0,0,0);
+	ObjText_SetHorizontalAlignment(objtext,ALIGNMENT_LEFT);
+	ObjText_SetMaxWidth(objtext,400);
+	Obj_SetRenderPriorityI(objtext,65);
+	
+	let objEnemy = ID_INVALID;
+	let objScene = GetEnemyBossSceneObjectID;
+	let alpha = 0;
+	
+	while(!Obj_IsDeleted(objScene)) {
+		if(length(GetEnemyBossObjectID)>0) { objEnemy = GetEnemyBossObjectID[0]; }
+		ObjRender_SetAlpha(objtext,alpha);
+		ObjText_SetText(objtext,name);
+		ObjRender_SetPosition(objtext,5,18,0);
+		if(alpha<255 && GetPlayerY>=115) { alpha+=255/30; }
+		if(alpha>150 && GetPlayerY<115) { alpha-=255/30; }
+		yield;
+	}
+	Obj_Delete(objtext);
+}
+
+task BossName(name, r, g, b) {
+	let objtext = ObjText_Create;
+	
+	ObjText_SetFontSize(objtext, 12);
+	ObjText_SetFontType(objtext, "Bank Gothic MD");
+	ObjText_SetFontBold(objtext, true);
+	ObjText_SetFontColorTop(objtext,255,255,255);
+	ObjText_SetFontColorBottom(objtext,r,g,b);
+	ObjText_SetFontBorderType(objtext,BORDER_FULL);
+	ObjText_SetFontBorderWidth(objtext,1);
+	ObjText_SetFontBorderColor(objtext,0,0,0);
+	ObjText_SetHorizontalAlignment(objtext,ALIGNMENT_LEFT);
+	ObjText_SetMaxWidth(objtext,400);
+	Obj_SetRenderPriorityI(objtext,65);
+	
+	let objEnemy = ID_INVALID;
+	let objScene = GetEnemyBossSceneObjectID;
+	let alpha = 0;
+	
+	while(!Obj_IsDeleted(objScene)) {
+		if(length(GetEnemyBossObjectID)>0) { objEnemy = GetEnemyBossObjectID[0]; }
+		ObjRender_SetAlpha(objtext,alpha);
+		ObjText_SetText(objtext,name);
+		ObjRender_SetPosition(objtext,5,18,0);
+		if(alpha<255 && GetPlayerY>=115) { alpha+=255/30; }
+		if(alpha>150 && GetPlayerY<115) { alpha-=255/30; }
+		yield;
+	}
+	Obj_Delete(objtext);
+}
+
+task MenuFadeBG {
+
+	let objBlack = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objBlack, CSD ~ "../sprites/black.png");
+	ObjSprite2D_SetSourceRect(objBlack, 0, 0, 32, 32);
+	ObjSprite2D_SetDestRect(objBlack, 0, 0, 640, 480);
+	Obj_SetRenderPriorityI(objBlack, 84);
+	ObjRender_SetPosition(objBlack, 0, 0, 0);
+
+	//SetForbidPlayerShot(true);
+	//SetForbidPlayerSpell(true);
+
+	let alpha = 255;
+
+	ascent(i in 0..60) { //10 * 25, 51 * 5
+		alpha = 255 - (255 * (i / 60));
+		ObjRender_SetAlpha(objBlack, alpha);
+		wait(1);
+	}
+
+	Obj_Delete(objBlack);
+}
+
+/*
+task FadeOutWhite {
+	while (!bossStart) { yield; }
+	//waitUntilBeat(344);
+	wait(360);
+	waitUntilBeat(37);
+
+	//Set render priority to 99...
+	let WhyAreYouWhite = ObjPrim_Create(OBJ_SPRITE_2D);
+	let path_white = "../sprites/white.png";
+	ObjPrim_SetTexture(WhyAreYouWhite, path_white);
+	ObjRender_SetAlpha(WhyAreYouWhite, 1);
+	ObjSprite2D_SetSourceRect(WhyAreYouWhite,0,0,64,64);
+	ObjSprite2D_SetDestRect(WhyAreYouWhite,0,0,640,480);
+	ObjRender_SetPosition(WhyAreYouWhite,0,0,0);
+	Obj_SetRenderPriorityI(WhyAreYouWhite, 90);
+
+	waitUntilBeat(38);
+	CloseScript(scriptBackground);
+	let scriptBackground2 = LoadScript(GetCurrentScriptDirectory ~ "./NamelessPath_Byak.dnh");
+	StartScript(scriptBackground2);
+
+	let a = 255;
+	let loop_len = 60;
+	loop(loop_len) {
+		ObjRender_SetAlpha(WhyAreYouWhite, a);
+		a -= 255/loop_len;
+		yield;
+	}
+
+	//while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	Obj_Delete(WhyAreYouWhite);
+}
+*/
+
+task Event0{
+	eventhappening = true;
+	let coleX = -20;
+	let coleY = 0;
+	let justinX = 40;
+	let justinY = -10;
+
+	InitializeEvent(1, 1);
+	HandleEventLogic();
+	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
+	SetCharStatusPresent(0, 0, true);
+	SetCutinGraphic(1, 0, justinPlainNeutral, justinX, justinY, false);
+	SetCharStatusPresent(1, 0, false);
+	
+	Talking(0);
+	SetEventText(0, 0, "Holy. Fucking. Shit.", 0);
+	SetEventText(0, 4, "Why the fuck are there a buncha[r]goddamn spatial distortions?", 0);
+	SetEventText(0, 4, "I'll need to work four shifts [r]in a row to fix 'em all.", 0);
+	SetEventText(0, 1, "So, I will...!", 0);
+	
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 0, "Take a break before Sandra gets mad.", 0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 4, "I swear she's gonna kill me if [r]I push myself any harder...", 0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 4, "Sanko'll be disappointed if I don't [r]fix the spacey whatevers though...", 0);
+	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
+	SetEventText(0, 1, "Why can't life be easy for once?!", 0);
+	
+	Talking(1);
+	SetEventText(1, 0, "Hey Cole.", 0);
+	SetCutinGraphic(0, 0, coleSurprised, coleX, coleY, false);
+	
+	ObjEnemyBossScene_Regist(objboss);
+	BossShadow;
+	wait(120);
+	SetCharStatusPresent(1, 0, true);
+	SetEventText(1, 0, "Why are you talking to yourself?", 0);
+	SetCutinGraphic(1, 0, justinPlainConcerned, justinX, justinY, false);
+	SetEventText(1, 0, "You sound loud and angry!", 0);
+	
+	Talking(0);
+	BossName("Justin", 222, 219, 58);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 0, "Oh. Hey yourself, Justin.", 0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "No reason! Just got a lot on my mind.", 0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 0, "Guess I'll just relax instead of thinkin'.", 0);
+	
+	Talking(1);
+	SetEventText(1, 0, "What's wrong?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
+	SetEventText(0, 0, "Render targets.", 0);
+	
+	Talking(1);
+	SetEventText(1, 0, "...", 0);
+	SetCutinGraphic(1, 0, justinPlainConfused, justinX, justinY, false);
+	SetEventText(1, 0, "What?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 4, "It's bullshit. Don't worry your [r]cute little head about it.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinPlainHappy, justinX, justinY, false);
+	SetEventText(1, 0, "Those must be powerful bulls!", 0);
+	SetCutinGraphic(1, 0, justinPlainBlush, justinX, justinY, false);
+	SetEventText(1, 0, "W-wait you called me cute-", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "I called you cute 'cause you are.", 0);
+	
+	Talking(1);
+	SetEventText(1, 0, "*audible, kinda cringe blushing*", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 0, "Since you're here, can you do me a favor?", 0);
+	SetEventText(0, 0, "Guess it's more like do &quot;us&quot; a favor.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinPlainNeutral, justinX, justinY, false);
+	SetEventText(1, 0, "Sure! What do you need?", 0);
+	SetCutinGraphic(1, 0, justinPlainWink, justinX, justinY, false);
+	SetEventText(1, 0, "I'll do anything to help a friend!", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 0, "That's...weird phrasing.", 0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "Anyway lemme smash you.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinPlainHappy, justinX, justinY, false);
+	SetEventText(1, 0, "Okay!", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 0, "...", 0);
+	Talking(1);
+	SetCutinGraphic(1, 0, justinPlainNeutral, justinX, justinY, false);
+	SetEventText(1, 0, "...", 0);
+	Talking(0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 0, "...", 0);
+	Talking(1);
+	SetCutinGraphic(1, 0, justinPlainConcerned, justinX, justinY, false);
+	SetEventText(1, 0, "...", 0);
+	SetCutinGraphic(1, 0, justinPlainBlush, justinX, justinY, false);
+	SetEventText(1, 0, "Wait a minute y-you said-", 0);
+	
+	Talking(0);
+	SetEventText(0, 0, "It sure took you a while.", 0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "I meant in danmaku.", 0);
+	
+	Talking(1);
+	SetEventText(1, 0, "...", 0);
+	SetCutinGraphic(1, 0, justinPlainHappy, justinX, justinY, false);
+	SetEventText(1, 0, "Okay let me get my magic swords!", 0);
+	
+	SetCharStatusPresent(1, 0, false);
+	
+	wait(60);
+	SetCutinGraphic(1, 0, justinSwordHappy, justinX, justinY, false);
+	SetCharStatusPresent(1, 0, true);
+	wait(30);
+	
+	SetEventText(1, 0, "Got them!", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleSurprised, coleX, coleY, false);
+	SetEventText(0, 0, "Where did you even go?!", 0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 4, "Anyway, you need practice and I need [r]to beat something up, so this works.", 0);
+	
+	Talking(1);
+	BossCircle;
+	PlayMusic(1.2);
+	SetCommonData("BGSpeed", 4);
+	SetCutinGraphic(1, 0, justinSwordAngry, justinX, justinY, false);
+	SetEventText(1, 0, "Hey, you won't just beat me up!", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "You sure? You never fought me, y'know.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinSwordHappy, justinX, justinY, false);
+	SetEventText(1, 0, "Even if I lose I'll put up a good fight!", 0);
+	SetCutinGraphic(1, 0, justinSwordWink, justinX, justinY, false);
+	SetEventText(1, 0, "It's all about exercise. Magic exercise!", 0);
+	
+	NotifyEventAll(EV_KILLBOSS, 1);
+	FinalizeEvent;
+	eventhappening = false;
+}
+
+task Event0_Short{
+	
+	ObjEnemyBossScene_Regist(objboss);
+	BossShadow;
+	wait(120);
+	
+	PlayMusic(1.25);
+	BossCircle;
+	SetCommonData("BGSpeed", 4);
+	
+	wait(15);
+	NotifyEventAll(EV_KILLBOSS, 1);
+	FinalizeEvent;
+	eventhappening = false;
+}
+
+task Event1{
+	eventhappening = true;
+	let coleX = -20;
+	let coleY = 0;
+	let justinX = 40;
+	let justinY = -10;
+
+	InitializeEvent(1, 1);
+	HandleEventLogic();
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetCharStatusPresent(0, 0, true);
+	SetCutinGraphic(1, 0, justinDefeatedNeutral, justinX, justinY, false);
+	SetCharStatusPresent(1, 0, true);
+	
+	wait(30);
+	
+	Talking(1);
+	SetEventText(1, 0, "Wow...you're good!", 0);
+	
+	Talking(0);
+	SetEventText(0, 0, "'Course I'm good. I'm an expert.", 0);
+	SetEventText(0, 4, "Danmaku, fisticuffs, tapping lands for [r]mana...I can fight in any system!", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinDefeatedConfused, justinX, justinY, false);
+	SetEventText(1, 0, "What's a land?", 0);
+	
+	Talking(0);
+	SetEventText(0, 0, "It's like...creatin' a bond to places you've been.", 0);
+	SetEventText(0, 0, "Then you use that energy to zap their bird.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinDefeatedHappy, justinX, justinY, false);
+	SetEventText(1, 0, "Uh...okay. Nice?", 0);
+	SetCutinGraphic(1, 0, justinDefeatedConcerned, justinX, justinY, false);
+	SetEventText(1, 0, "Do the birds deserve that?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
+	SetEventText(0, 0, "They sure as fuck do.", 0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 4, "Anyway, wanna go to your place? [r]I can fix your clothes there.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinDefeatedConcerned, justinX, justinY, false);
+	SetEventText(1, 0, "R-really?", 0);
+	SetCutinGraphic(1, 0, justinDefeatedBlush, justinX, justinY, false);
+	SetEventText(1, 0, "D-do you have to take them off me?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 0, "No? I have a demonic dry cleaning spell.", 0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "Then I can use your gym after.", 0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 4, "The Mansion gym smells like [r]antisocial cat these days.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinDefeatedConcerned, justinX, justinY, false);
+	SetEventText(1, 0, "I don't like that smell.", 0);
+	SetCutinGraphic(1, 0, justinDefeatedNeutral, justinX, justinY, false);
+	SetEventText(1, 0, "...", 0);
+	SetCutinGraphic(1, 0, justinDefeatedBlush, justinX, justinY, false);
+	SetEventText(1, 0, "I used the swords pretty well, right?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetEventText(0, 0, "Yeah, you did!", 0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 4, "Come up with more patterns[r]and you'll be awesome.", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, justinDefeatedWink, justinX, justinY, false);
+	SetEventText(1, 0, "Thank you, but I'm already awesome.", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
+	SetEventText(0, 0, "Always humble, huh.", 0);
+	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetEventText(0, 0, "Let's get going, it's freezing.", 0);
+	
+	SetCharStatusPresent(0, 0, false);
+	SetCharStatusPresent(1, 0, false);
+	
+	wait(30);
+	
+	FinalizeEvent;
+	eventhappening = false;
+}

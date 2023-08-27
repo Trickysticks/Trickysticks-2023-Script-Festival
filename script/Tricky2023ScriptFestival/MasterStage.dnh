@@ -1,0 +1,71 @@
+#TouhouDanmakufu[Stage]
+#ScriptVersion[3]
+#System["./default_system/Default_System.txt"]
+#System["./tricky_system/TrickySystem.dnh"]
+#Title["Gelid Greetings"]
+#Text["It's cold and Cole is mad.[r]Beware the angry demon."]
+#Player["./player/Tricky_Players_sx/Ashley.dnh", "./player/Tricky_Players_sx/Cole.dnh", "./player/Tricky_Players_sx/Tricky.dnh"]
+
+let scriptStage1;
+let scriptStage2;
+let scriptStage3;
+let scriptStageM;
+let CSD = GetCurrentScriptDirectory;
+let CSD_EX = GetCurrentScriptDirectory;
+let blackDone = false;
+
+#include"./lib/includes/LoadingFunctions.dnh"
+
+@Initialize{
+
+LoadAllImagesInFolder(CSD);
+
+InstallFont(CSD ~ "BNKGOTHM.TTF");
+InstallFont(CSD ~ "GenericMobileSystem.ttf");
+SetCommonData("Main Game", true);
+
+scriptStage1 = LoadScript(CSD ~ "Stage1/aStage.dnh");
+//scriptStage2 = LoadScript(CSD ~ "Stage2/aStage.dnh");
+
+SetPlayerLife(9);
+MenuFadeBG;
+TGame();
+
+}
+
+@MainLoop{ yield; }
+
+task TGame {
+	/*
+	StartScript(scriptStageM);
+	while(!IsCloseScript(scriptStageM)){ yield; }
+	*/
+
+	//WriteLog("Starting Stage 1 script.");
+	StartScript(scriptStage1);
+	//WriteLog("Script Started");
+	blackDone = true;
+	while(!IsCloseScript(scriptStage1)){ yield; }
+
+	/*
+	StartScript(scriptStage2);
+	blackDone = true;
+	while(!IsCloseScript(scriptStage2)){ yield; }
+	*/
+	CloseStgScene;
+	CloseScript(GetOwnScriptID());
+}
+
+task MenuFadeBG {
+	let objBlack = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objBlack, CSD ~ "sprites/black.png");
+	ObjSprite2D_SetSourceRect(objBlack, 0, 0, 32, 32);
+	ObjSprite2D_SetDestRect(objBlack, 0, 0, 640, 480);
+	Obj_SetRenderPriorityI(objBlack, 84);
+	ObjRender_SetPosition(objBlack, 0, 0, 0);
+
+	while(!blackDone) { yield; }
+	wait(5);
+
+	Obj_Delete(objBlack);
+}

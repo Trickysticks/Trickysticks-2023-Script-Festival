@@ -1,0 +1,166 @@
+let current = GetCurrentScriptDirectory();
+let bSpell = false;
+let objScene;
+
+let field = GetCurrentScriptDirectory~"./sprites/nbga.png";
+let fogback = GetCurrentScriptDirectory~"./sprites/nbg2.png";
+let trail = GetCurrentScriptDirectory~"./sprites/nbgb.png";
+let trees = GetCurrentScriptDirectory~"./sprites/nbg4.png";
+
+let tiltangle = 30;
+let time = 0;
+let objtreesright = [];
+let objtreesleft = [];
+
+let globalscroll = 0.5;
+let pathscroll = 0;
+let camanglemodifier = 180; //set to 0 for effect
+let treeoffset = -1110;
+let acceleration = 1; //usually starts at 0.5
+let accelChangeRate = 0.025/2; //change this to make acceleration slower
+let bgtime = 0;
+
+@Initialize{
+	LoadTexture(field);
+	LoadTexture(fogback);
+	LoadTexture(trail);
+	LoadTexture(trees);
+	SetAutoDeleteObject(true);
+	SetCameraFocusXYZ(0, -60, 80);
+	SetViewFrom(10, -90, 30+15*cos(camanglemodifier));
+	//SetFogParam(350, 750, 25, 25, 112);
+	//SetFogParam(350, 750, 43, 30, 110); 
+	SetFogParam(350, 750, 215, 177, 165); 
+	SetFogParam(350, 750, 57, 67, 81); 
+	StartNamelessPath;
+}
+
+@MainLoop{
+
+	objScene = GetEnemyBossSceneObjectID();
+	if(objScene != ID_INVALID && ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL)){ bSpell = true; } //If a spell is happening, bSpell is true.
+	else {	bSpell = false; } //else, it isn't
+	globalscroll+=acceleration;
+	pathscroll+=acceleration;
+	yield;
+}
+
+
+function SetViewFrom(radius, azimuth, elevation){
+
+	SetCameraRadius(radius);
+	SetCameraAzimuthAngle(azimuth);
+	SetCameraElevationAngle(elevation);
+	
+}
+
+//function wait(w){ loop(w){ yield; } }
+
+task StartNamelessPath{
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_3D);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+	Obj_SetRenderPriorityI(obj,21);
+	ObjPrim_SetTexture(obj,field);
+	ObjSprite3D_SetSourceDestRect(obj, 0, 0+pathscroll, 500, 1500+pathscroll);
+	ObjRender_SetAngleXYZ(obj, 90, 0, 0);
+	ObjRender_SetScaleXYZ(obj, 1, 1, 1);
+	ObjRender_SetPosition(obj, 0, -300, 600);
+
+	let obj2 = ObjPrim_Create(OBJ_SPRITE_3D);
+	ObjRender_SetBlendType(obj2, BLEND_ALPHA);
+	Obj_SetRenderPriorityI(obj2,22);
+	ObjPrim_SetTexture(obj2,trail);
+	ObjSprite3D_SetSourceDestRect(obj2, 0, 0+pathscroll, 512, 1500+pathscroll);
+	ObjRender_SetAngleXYZ(obj2, 90, 0, 0);
+	ObjRender_SetScaleXYZ(obj2, 0.5, 1, 1);
+	ObjRender_SetPosition(obj2, 0, -300, 600);
+	
+	let obj5 = ObjPrim_Create(OBJ_SPRITE_3D);
+	ObjRender_SetBlendType(obj5, BLEND_ALPHA);
+	Obj_SetRenderPriorityI(obj5,20);
+	ObjPrim_SetTexture(obj5,fogback);
+	ObjSprite3D_SetSourceDestRect(obj5, 1, 1, 256, 256);
+	ObjRender_SetAngleXYZ(obj5, 0, 180, 180);
+	ObjRender_SetScaleXYZ(obj5, 10, 10, 1);
+	ObjRender_SetPosition(obj5, 0, 0, 1900); 
+
+	loop(11){
+	
+		let obj3 = ObjPrim_Create(OBJ_SPRITE_3D);
+		ObjRender_SetBlendType(obj3, BLEND_ALPHA);
+		Obj_SetRenderPriorityI(obj3,23);
+		ObjPrim_SetTexture(obj3,trees);
+		ObjSprite3D_SetSourceDestRect(obj3, 0, 0, 512, 700);
+		ObjRender_SetAngleXYZ(obj3, 0, 0, 180);
+		ObjRender_SetScaleXYZ(obj3, 0.5, 0.5, 1);
+		ObjRender_SetPosition(obj3, 160, -50, 1200-globalscroll+treeoffset);
+		
+		objtreesright = objtreesright ~ [obj3];
+		
+		let obj4 = ObjPrim_Create(OBJ_SPRITE_3D);
+		ObjRender_SetBlendType(obj4, BLEND_ALPHA);
+		Obj_SetRenderPriorityI(obj4,23);
+		ObjPrim_SetTexture(obj4,trees);
+		ObjSprite3D_SetSourceDestRect(obj4, 0, 0, 512, 700);
+		ObjRender_SetAngleXYZ(obj4, 0, 0, 180);
+		ObjRender_SetScaleXYZ(obj4, 0.5,0.5, 1);
+		ObjRender_SetPosition(obj4, -160, -50, 1200-globalscroll+treeoffset);
+		
+		objtreesleft = objtreesleft ~ [obj4];
+		treeoffset-=110;
+	}
+	
+	treeoffset = 0;
+	
+	loop{
+	
+		if(time>=0){ //set to 90 or some higher number for panning up
+			if(GetCommonData("BGTransition", false)==false){
+				
+			}
+			else{ if(acceleration>6){ acceleration-=0.025; } }
+			
+			if(absolute(acceleration - GetCommonData("BGSpeed", 2.000000)) < 0.01){ } //REALLY DUMB CHECK TO SEE IF THEY'RE ROUGHLY EQUAL BECAUSE FLOATING POINT BS
+			else if(acceleration>GetCommonData("BGSpeed", 2.000000)){ acceleration-=accelChangeRate; }
+			else if(acceleration<GetCommonData("BGSpeed", 2.000000)){ acceleration+=accelChangeRate; }
+			//WriteLog("Acceleration: " ~ ToString(acceleration));
+			//WriteLog("BGSpeed: " ~ ToString(GetCommonData("BGSpeed", 2)));
+			//WriteLog("Acceleration - BGSpeed: " ~ ToString(acceleration-GetCommonData("BGSpeed", 2)));
+			//WriteLog(acceleration == GetCommonData("BGSpeed", 2.000000));
+				
+			//if(globalscroll>110){ globalscroll=0; }
+			globalscroll%=110;
+			if(camanglemodifier < 180){camanglemodifier += 1;}
+			
+			SetViewFrom(10, -90, 30+15*cos(camanglemodifier));
+			if(GetCommonData("BGTransition", false)==true && bgtime<180){ bgtime++; }
+			//SetFogParam (350, 750, 95-(45/180)*bgtime, 95-(45/180)*bgtime, 95+((132-85)/180)*bgtime); 
+		}
+		
+		time++;
+		ObjRender_SetBlendType(obj, BLEND_ALPHA);
+		Obj_SetRenderPriorityI(obj,21);
+	 
+		ObjPrim_SetTexture(obj,field);
+		ObjSprite3D_SetSourceDestRect(obj, 0, 0+pathscroll, 500, 1500+pathscroll);
+		ObjRender_SetAngleXYZ(obj, 90, 0, 0);
+		ObjRender_SetScaleXYZ(obj, 1, 1, 1);
+		ObjRender_SetPosition(obj, 0, -300, 600);
+
+		ObjRender_SetBlendType(obj2, BLEND_ALPHA);
+		Obj_SetRenderPriorityI(obj2,22);
+		ObjSprite3D_SetSourceDestRect(obj2, 0, 0+pathscroll, 512, 1500+pathscroll);
+		ObjRender_SetAngleXYZ(obj2, 90, 0, 0);
+		ObjRender_SetScaleXYZ(obj2, 0.5, 1, 1);
+		ObjRender_SetPosition(obj2, 0, -300, 600);
+
+		ascent(i in 0..length(objtreesright)){
+			ObjRender_SetPosition(objtreesright[i], 160, -150, 1200-globalscroll+treeoffset);
+			ObjRender_SetPosition(objtreesleft[i], -160, -150, 1200-globalscroll+treeoffset);
+			treeoffset-=110;
+		}
+		treeoffset = 0;	
+		wait(1);
+	}
+}

@@ -1,0 +1,67 @@
+//Item Spawning Script 
+
+let CSD = GetCurrentScriptDirectory;
+let MD = GetModuleDirectory;
+
+#include"./Event_Const.dnh"
+
+@Initialize{}
+
+@MainLoop { yield; }
+
+@Event {
+	alternative(GetEventType)
+	case(EV_CREATE_ITEM) {
+		let eventParam = GetEventArgument(0);
+		let type = eventParam[0][0];
+		alternative(type)
+		case(0){ CreateItems01(eventParam[1][0], eventParam[2][0], eventParam[3][0], eventParam[4][0], eventParam[5][0], eventParam[6][0], eventParam[7][0]); }
+		case(1) { CreateItems02(eventParam[1][0], eventParam[2][0], eventParam[3][0], eventParam[4][0], eventParam[5][0], eventParam[6][0], eventParam[7][0], eventParam[8][0], eventParam[9][0]); }
+	}
+	/*
+	case(EV_DELETE_SHOT_TO_ITEM){
+		let eventParam = GetEventArgument(0);
+		CreateItemA1(ITEM_POINT_S, eventParam[1][0], eventParam[1][1], 10);
+	}
+	*/
+}
+
+/*
+EV_DELETE_SHOT_TO_ITEM is notified when an item is deleted and turned into an item.
+			Actions that trigger this event:
+				- Using ObjShot_ToItem.
+				- Using DeleteShotAll or DeleteShotInCircle with TYPE_ITEM.
+			
+			Event arguments:
+				1) (int) shot object ID
+				2) (float[]) position [x, y]
+				3) (bool) collided with player
+					If true, the shot was deleted from coliision with a player hitbox.
+				4) (int) shot image ID
+*/
+
+task CreateItems01(amount, type, x, y, xrandfactor, yrandfactor, score){
+	loop(amount){
+		let item = CreateItemA1(type, x+rand(-xrandfactor, xrandfactor), y+rand(-yrandfactor, yrandfactor), score);
+		//ObjItem_SetAutoCollectEnable(item, false);
+	}
+}
+
+task CreateItems02(amount, type, x, y, relativexoffset, relativeyoffset, xrandfactor, yrandfactor, score){
+	let xloc = 0;
+	let yloc = 0;
+	loop(amount){
+		xloc = x+rand(-xrandfactor, xrandfactor);
+		yloc = y+rand(-yrandfactor, yrandfactor);
+		let item = CreateItemA2(type, xloc, yloc, xloc+relativexoffset, yloc+relativeyoffset, score);
+		//ObjItem_SetAutoCollectEnable(item, false);
+	}
+}
+
+/*
+task CreateItemCard(type, x, y, score){
+	let item = CreateItemU1(type, x, y, score);
+	ObjItem_SetAutoCollectEnable(item, false);
+}*/
+
+//function wait(w){ loop(w){ yield; } }

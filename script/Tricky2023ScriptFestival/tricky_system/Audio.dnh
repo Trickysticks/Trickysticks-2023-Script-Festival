@@ -1,0 +1,256 @@
+//Sound Effect and BGM Script
+
+let CSD = GetCurrentScriptDirectory;
+let MD = CSD~"../";
+
+let objBGM = ID_INVALID;
+
+#include"./Event_Const.dnh"
+
+@Initialize {
+	SetCommonData("Sound ID",[]);
+	SetCommonData("Sound STR",[]);
+	InitializeGlobalSoundObjects;
+}
+
+@MainLoop {
+	yield;
+}
+
+@Event {
+	alternative(GetEventType)
+	case(EV_LOAD_SOUND) {
+		let eventParam = GetEventArgument(0);
+		CreateSoundObject02(eventParam[0],eventParam[1],GetCommonData("ActiveScript",0));
+	}
+	case(EV_SOUND) {
+		let eventParam = GetEventArgument(0);
+		PlaySound(eventParam[0]);
+	}
+	case(EV_MUSIC_START) {
+		let eventParam = GetEventArgument(0);
+		Obj_Delete(objBGM);
+		objBGM = PlayMusic(eventParam);
+	}
+	case(EV_MUSIC_FADE) {
+		let eventParam = GetEventArgument(0);
+		FadeOutSound(objBGM,eventParam);
+	}
+	case(EV_MUSIC_PAUSE){ ObjSound_Stop(objBGM); }
+	case(EV_MUSIC_RESUME){ ObjSound_Play(objBGM); }
+	case(EV_MUSIC_STOP) { Obj_Delete(objBGM); }
+	case(EV_MUSIC_INFO) { 
+		let eventParam = GetEventArgument(0);
+		SetCommonData("BGM INFO",ObjSound_GetInfo(objBGM, eventParam)); 
+	}
+}
+
+function InitializeGlobalSoundObjects {
+	let SE_ALL = ["alert","boltingcast","boltinghit","boon","capture1", "capture2","caution","cardcall","charge","charge2","coleLaugh","damage1","damage2","end","fam", "fire","fire2","laser","menu_back","menu_move","menu_select",
+	"ping","sagecast","se_don00", "se_enep00","se_enep01","se_enep02","se_phantom1","se_player_shot","shadow","shot","shot2","shot3","shot4","shot5","slash","thunder","thwomp","time1","time2","whack"];
+			  
+	ascent(i in 0..length(SE_ALL)) {
+		CreateSoundObject01(SE_ALL[i]);
+	}
+}
+
+task CreateSoundObject01(name) {
+	let obj = ObjSound_Create;
+	ObjSound_SetSoundDivision(obj,SOUND_SE);
+	ObjSound_Load(obj,MD ~ "sfx/" ~name~ ".wav");
+	ObjSound_SetResumeEnable(obj, true);
+	
+	let Sound_ID = GetCommonData("Sound ID",[-1]);
+	let Sound_STR = GetCommonData("Sound STR",[-1]);
+	
+	Sound_ID = Sound_ID ~ [obj];
+	Sound_STR = Sound_STR ~ [name];
+	
+	SetCommonData("Sound ID", Sound_ID);
+	SetCommonData("Sound STR", Sound_STR);
+}
+
+task CreateSoundObject02(name,path,scriptID) {
+	let obj = ObjSound_Create;
+	ObjSound_SetSoundDivision(obj,SOUND_SE);
+	ObjSound_Load(obj,path);
+	ObjSound_SetResumeEnable(obj, true);
+	
+	let Sound_ID = GetCommonData("Sound ID",[-1]);
+	let Sound_STR = GetCommonData("Sound STR",[-1]);
+	
+	Sound_ID = Sound_ID ~ [obj];
+	Sound_STR = Sound_STR ~ [name];
+	
+	SetCommonData("Sound ID", Sound_ID);
+	SetCommonData("Sound STR", Sound_STR);
+	
+	while(!IsCloseScript(scriptID)) { yield; }
+	while(ObjSound_IsPlaying(obj)) { yield; }
+	loop(30) { yield; }
+	
+	Sound_ID = GetCommonData("Sound ID",[-1]);
+	Sound_STR = GetCommonData("Sound STR",[-1]);
+	let ID = -1;
+	ascent(i in 0..length(Sound_STR)) {
+		if(Sound_STR[i] == name) { ID = i; break; }
+	}
+	Sound_ID = erase(Sound_ID,ID);
+	Sound_STR = erase(Sound_STR,ID);
+	SetCommonData("Sound ID", Sound_ID);
+	SetCommonData("Sound STR", Sound_STR);
+	Obj_Delete(obj);
+}
+
+task PlaySound(name) {
+	let Sound_ID = GetCommonData("Sound ID",[-1]);
+	let Sound_STR = GetCommonData("Sound STR",[-1]);
+	let ID = -1;
+	ascent(i in 0..length(Sound_STR)) {
+		if(Sound_STR[i] == name) { ID = i; break; }
+	}
+	if(ID == -1){ RaiseError("Sound object does not exist: "~name); }
+	
+	ObjSound_SetVolumeRate(Sound_ID[ID],Obj_GetValueD(Sound_ID[ID],"Volume",0)*GetAreaCommonData("Options","SFX",1));
+	if(Obj_GetValueD(Sound_ID[ID],"x",0)!=-1){
+	ObjSound_SetPanRate(Sound_ID[ID], -30+(Obj_GetValueD(Sound_ID[ID],"x", 192)/6.4));
+	}
+	ObjSound_Play(Sound_ID[ID]);
+}
+
+function PlayMusic(id) {
+	let objSound = ObjSound_Create;
+	let vol = 1;
+	alternative(id)
+		case(1.1) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm1.ogg");
+			ObjSound_SetLoopSampleCount(objSound, 484349, 3776091);
+			ObjSound_SetLoopEnable(objSound,true);
+			DrawBGMText("Crossroad -Advanced-");
+			vol = 0.95;
+		}
+		case(1.15) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm1.ogg");
+			ObjSound_SetLoopSampleCount(objSound, 484349, 3776091);
+			ObjSound_SeekSampleCount(objSound, 3706091);
+			ObjSound_SetLoopEnable(objSound,true);
+			DrawBGMText("Crossroad -Advanced-");
+			vol = 0.95;
+		}
+		case(1.2) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm2.ogg");
+			DrawBGMText("ouka_beni.mp3");
+			ObjSound_SetLoopSampleCount(objSound, 1323282, 10741824);
+			ObjSound_SetLoopEnable(objSound, true);
+			vol = 1;
+		}
+		case(1.25) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm2.ogg");
+			DrawBGMText("ouka_beni.mp3");
+			ObjSound_SetLoopSampleCount(objSound, 1323282, 10741824);
+			ObjSound_SeekSampleCount(objSound, 10541824);
+			ObjSound_SetLoopEnable(objSound,true);
+
+			vol = 1;
+		}
+		
+		case(2.1) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm3.ogg");
+			DrawBGMText("Slithering in the Dark ~ 3 Way Division");
+			ObjSound_SetLoopSampleCount(objSound, 0, 5619802);
+			ObjSound_SetLoopEnable(objSound,true);
+			vol = 0.95;
+		}
+		case(2.2) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm4.ogg");
+			DrawBGMText("Unknown Attacker");
+			ObjSound_SetLoopSampleCount(objSound, 133464, 7016274);
+			ObjSound_SetLoopEnable(objSound,true);
+			vol = 1;
+		}
+		case(99.2) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm99.ogg");
+			DrawBGMText("Spellcard Declarations at Dawn");
+			ObjSound_SetLoopSampleCount(objSound, 88200, 8656169); //Spell Card Declarations At Dawn - 3:16.285, resumes at 0:02.000
+			ObjSound_SetLoopEnable(objSound,true);
+			vol = 1;
+		}
+		/*
+		case(3.1) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm5.ogg");
+			DrawBGMText("Mononoke Dream Train");
+			ObjSound_SetLoopSampleCount(objSound, 144752, 8330746);
+			ObjSound_SetLoopEnable(objSound,true);
+			vol = 0.85;
+		}
+		case(3.2) {
+			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm6.ogg");
+			DrawBGMText("Your Lifeline in the Palm of the Conjurer's Hand");
+			ObjSound_SetLoopSampleCount(objSound, 224081, 6187375);
+			ObjSound_SetLoopEnable(objSound,true);
+			vol = 0.9;
+		}
+		*/
+	ObjSound_SetResumeEnable(objSound,true);
+	ObjSound_SetSoundDivision(objSound,SOUND_BGM);
+	ObjSound_Play(objSound);
+	
+	SetVolume;
+	return objSound;
+	
+	task SetVolume {
+		while(!Obj_IsDeleted(objSound)) {
+			ObjSound_SetVolumeRate(objSound,GetAreaCommonData("Options","Music",1.0)*100*vol);
+			yield;
+		}
+	}
+	
+	task DrawBGMText(text) {
+		let objText = ObjText_Create;
+		let x = 0;
+		let y = 0;
+		
+		ObjText_SetText(objText, "BGM: " ~ text);
+		ObjText_SetFontType(objText, "Corbel");
+		ObjText_SetFontSize(objText, 16);
+		ObjText_SetFontBold(objText, false);
+		ObjText_SetFontColorTop(objText, 224, 255, 255);
+		ObjText_SetFontColorBottom(objText, 255, 255, 255);
+		ObjText_SetFontBorderType(objText, BORDER_FULL);
+		ObjText_SetFontBorderColor(objText, 0, 0, 0);
+		ObjText_SetFontBorderWidth(objText, 1);
+		ObjText_SetHorizontalAlignment(objText, ALIGNMENT_RIGHT);
+		ObjText_SetMaxWidth(objText, 500);
+		Obj_SetRenderPriorityI(objText, 80);
+		
+		ObjRender_SetY(objText,GetStgFrameHeight-19);
+		
+		while(x<275) {
+			ObjRender_SetX(objText,150-x);
+			x+=3;
+			yield;
+		}
+		ObjRender_SetX(objText,150-275);
+		loop(240) { yield; }
+		while(y<20) {
+			ObjRender_SetY(objText,GetStgFrameHeight-19+y);
+			y+=1;
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+}
+
+task FadeOutSound(obj,frames) {
+	let volume = ObjSound_GetVolumeRate(obj);
+	let volumelimit = volume;
+	if(volumelimit<0) { volumelimit = 0; }
+	loop(frames) {
+		ObjSound_SetVolumeRate(obj,volume);
+		volume-=volumelimit/frames;
+		yield;
+	}
+	ObjSound_Stop(obj);
+	yield;
+	Obj_Delete(obj);
+}

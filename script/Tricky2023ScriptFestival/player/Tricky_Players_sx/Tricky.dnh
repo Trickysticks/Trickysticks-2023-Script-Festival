@@ -1,0 +1,322 @@
+#東方弾幕風[Player]
+#ScriptVersion[3]	
+#ID["TrickySnY"]
+#Title["Tricky"]
+#Text["Tricky player script[r]Unfocused Speed 5.0[r]Focused Speed 2.5[r]Lyos's Gift to Trickee.[r]Player Script by Syoudre.[r]Art by Lobby (placeholder).[r]Sprite by Mr. Gaberson."]
+#Image["./texture/Tricky_Portrait_placeholder.png"]
+#include "./global_lib.txt"
+#include "./global_functions.txt"
+
+optDistance = [48, -36];
+let tr = optDistance[0] - optDistance[1];
+currDist = optDistance[0];
+optTex = optTex ~ "Familliar_Tricky_02.png";
+
+@Initialize{
+	SetPlayerSpeed(5,2.5);
+	SetPlayerDownStateFrame(60);
+	SetPlayerRebirthFrame(20);
+	SetPlayerAutoItemCollectLine(150);
+	SetPlayerClip(0+3, 0+12, 384-3, 448-8);
+	SetPlayerLife(2);
+	SetPlayerSpell(3);
+	SetPlayerItemScope(48);
+	
+	LoadPlayerShotData(shotPath); 
+	
+	ObjPlayer_AddIntersectionCircleA1(objPlayer, 0, 0, 1, 32); 
+	
+	ObjPrim_SetTexture(objPlayer, CSD ~ "./texture/TrickySprite.png");
+	ObjRender_SetTextureFilterMag(objPlayer, FILTER_POINT);
+	
+	TImage();
+	TShot();
+	TMagicCircle();
+	renderHitbox();
+	
+	ascent(i in -2..3){
+		if(i != 0){ TOption(i); }
+	}
+}
+
+@MainLoop{
+	isFocus = (VKeyPressed(VK_SLOWMOVE) && GetPlayerState() != STATE_DOWN) ? true : false;
+	FindVictim = GetAllEnemyID;
+
+
+	yield;
+}
+
+@Event{
+	alternative(GetEventType())
+	case(EV_GRAZE) 
+	{
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 3);
+		AddScore(100);
+		if (curr_graze_particles < MAX_GRAZE_PARTICLES) {
+			CreateGrazeParticle();
+		}
+	}
+	case(EV_REQUEST_SPELL)
+	{
+		if(GetPlayerSpell > 0)
+		{
+			SetPlayerSpell(GetPlayerSpell-1);
+			SetScriptResult(true);
+			TSpell();
+		}
+		else{
+			SetScriptResult(false);
+		}
+	}
+	case(EV_HIT)
+	{
+		//被弾
+		
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 2);
+		//PlaySoundEffect("DIE");
+		TExplosion();
+		
+	}
+	case(EV_PLAYER_SHOOTDOWN)
+	{
+		//被弾
+		SetForbidPlayerShot(true);
+		SetForbidPlayerSpell(true);
+		
+	}
+	case(EV_PLAYER_REBIRTH)
+	{
+		//復帰
+		SetPlayerSpell(3);
+		SetPlayerInvincibilityFrame(180);
+		SetForbidPlayerShot(false);
+		SetForbidPlayerSpell(false);
+	}
+	case(EV_DELETE_SHOT_PLAYER)
+	{
+		CreateDeleteParticle(GetEventArgument(0), GetEventArgument(2));
+	}
+}
+
+task TShot(){
+	int shotFrame = 0;
+	loop{
+		if(VKeyPressed(VK_SHOT) && IsPermitPlayerShot()){
+			if(isFocus && shotFrame % 3 == 0){
+				ascent(i in 0..3){
+					CreatePlayerShotA1(GetPlayerX()-10 + 10*i, GetPlayerY() - 12, 13, 265+5*i, 8.4, 1, 1);
+				}
+			}
+			else if (!isFocus && shotFrame % 3 == 0){
+				ascent(i in 0..4){
+					CreatePlayerShotA1(GetPlayerX()-15 + 10*i, GetPlayerY() - 12, 13, 258.75+7.5*i, 8.4, 1, 1);
+				}
+			}
+			shotFrame++;
+		}
+		else{
+			shotFrame = 0;
+		}
+		yield;
+	}
+}
+
+task optionShot(int obj, int dir){
+	int shotFrame = 0;
+	float pX = 0; float pY = 0;
+	int abs = absolute(dir);
+	loop{
+		pX = ObjRender_GetX(obj); 
+		pY = ObjRender_GetY(obj);
+		if(VKeyPressed(VK_SHOT) && IsPermitPlayerShot()){
+			if(!isFocus && shotFrame % 10 == 5*abs-1){
+				let sh = CreatePlayerShotA1(pX, pY, 8, 270+dir*8, 11.25, 1, 4);
+				Grower(sh);
+				Homer(sh, 120, 0.25, 8, 0, 0, 800, 0.025, 0, 15);
+			}
+			else if (isFocus && shotFrame % 30 == 15*abs-1){
+				let sh = CreatePlayerShotA1(pX, pY, 10, 270, 10, 1, 3);
+				Grower(sh);
+			}
+			shotFrame++;
+		}
+		else{
+			shotFrame = 0;
+		}
+		yield;
+	}
+}
+
+task TSpell(){
+	int objManage = GetSpellManageObject();
+	SetPlayerInvincibilityFrame(360);
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 12);
+	NotifyEvent(SFXSCR, EV_PLAY_SFX, 6);
+	if(isFocus){
+		SpellCardCutIn(spellcardNames[0][1]);
+		//Quake(120, 2);
+		ascent(i in 0..6){
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+			SetConcentrateEffect(GetPlayerX(), GetPlayerY(), RBord/2, DBord/2, rand(225, 500), 8, 1, 128, 16, 195-15*i, 12);
+			moveHolyLaser(120-15*i);
+			wait(15);
+		}
+		
+		wait(30);
+		Quake(90, 3);
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 5);
+		ascent(i in 0..45){
+			Darkness(3+i/4);
+			wait(1);
+		}
+		wait(30); 
+		Quake(90, 4);
+		ascent(i in 0..45){
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 4);
+			Light(5+13*sin(i*3), 10, 0);
+			if(i % 4 == 0){Light(3+9*sin(i*3), 5, 1);}
+			wait(2);
+		}
+		wait(15);
+		Quake(15, 8);
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 7);
+		ascent(i in 0..6){
+			Light(20, 20, 0);
+		}
+		ascent(i in 0..4){
+			Light(20, 20, 1);
+			yield;
+		}
+	}
+	else{
+		SpellCardCutIn(spellcardNames[0][0]);
+		NotifyEvent(SFXSCR, EV_PLAY_SFX, 18);
+		ascent(i in 0..100){
+			NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
+			ascent(j in 0..5){
+				int sh = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), 12, i*20*-n+j*72, 4, 9999, 6);
+				ObjShot_SetAutoDelete(sh, false);
+				ObjShot_SetDeleteFrame(sh, 180);
+				ObjShot_SetSpellFactor(sh, true);
+				ObjShot_SetEraseShot(sh, true);
+				ObjMove_AddPatternA2(sh, 0, NO_CHANGE, NO_CHANGE, 0, 0, 180/15*n);
+				ObjMove_AddPatternA2(sh, 15, NO_CHANGE, NO_CHANGE, 0, 0, 0);
+				ObjMove_AddPatternA2(sh, 20, NO_CHANGE, NO_CHANGE, 0, 0, 60/10*n);
+				ObjMove_AddPatternA2(sh, 30, NO_CHANGE, NO_CHANGE, 0, 0, -n/15);
+			}
+			
+			wait(3);
+		}
+		n*=-1;
+	}
+	Obj_Delete(objManage);
+}
+
+task moveHolyLaser(frames){
+	float pX = GetPlayerX();
+	float pY = GetPlayerY();
+	float dX = RBord/2 - pX;
+	float dY = DBord/2 - pY;
+	
+	float oX = dX/frames;
+	float oY = dY/frames;
+	
+	int lsr = CreateHolyLaser(pX, pY, 0, 0, 100, 30, 0.3, 9999, 10, 0);
+	ObjRender_SetAlpha(lsr, 192);
+	float ranX = rand(64, 448);
+	float ranY = rand(64, 256);
+	float ranAng = rand(0, 360);
+	float ranAngVel = rand(-18, 18);
+	
+	float xDist = 0;	float yDist = 0;
+	ascent(i in 0..frames+2){
+		if(i < 30){
+			xDist += ranX/30;
+			yDist += ranY/30;
+		}
+		if(i > frames-30){
+			xDist -= ranX/30;
+			yDist -= ranY/30;
+		}
+		
+		ObjMove_SetPosition(lsr, pX + xDist * cos(ranAng), pY + yDist * sin(ranAng));
+		ObjMove_SetAngle(lsr, ranAng-90);
+		
+		pX += oX;
+		pY += oY;
+		ranAng += ranAngVel;
+		yield;
+	}
+	wait(120);
+	Obj_Delete(lsr);
+}
+
+task Darkness(sz){
+	int sh = CreateShotA1(192, 224, 0, rand(0, 360), 9, 0);
+	
+	ObjShot_SetIntersectionEnable(sh, false);
+	ObjRender_SetBlendType(sh, BLEND_SUBTRACT);
+	
+	ObjRender_SetScaleXYZ(sh, sz);
+	ObjRender_SetAngleXYZ(sh, rand(0, 360), rand(0, 360), rand(0, 360));
+	float sca = rand(1, 4);
+	
+	ObjRender_SetAlpha(sh, 0);
+	
+	ascent(i in 1..31){
+		float sc = Interpolate_Linear(1, 0, i/30);
+		ObjRender_SetScaleXYZ(sh, sz*sc, sca*sc, 0);
+		ObjRender_SetAlpha(sh, 128-128*sc);
+		yield;
+	}
+	Obj_Delete(sh);
+}
+
+task Light(sz, pow, type){
+	int sh = CreateShotA1(192, 224, 0, 0, 8, 0);
+	
+	ObjShot_SetDamage(sh, pow);
+	ObjShot_SetPenetration(sh, 9999);
+	ObjRender_SetBlendType(sh, BLEND_ADD_ARGB);
+	
+	ObjShot_SetAutoDelete(sh, false);
+	ObjShot_SetEraseShot(sh, true);
+	ObjShot_SetSpellFactor(sh, true);
+	
+	if(type == 0)ObjRender_SetAngleXYZ(sh, rand(0, 360), rand(0, 360), rand(0, 360));
+	float sca = rand(1, 4);
+	ascent(i in 1..31){
+		float sc = Interpolate_Linear(0, 1, i/30);
+		ObjRender_SetScaleXYZ(sh, sz*sc, (type == 0 ? sca : sz)*sc, sz*sc);
+		ObjRender_SetAlpha(sh, 216-216*sc);
+		ObjShot_SetIntersectionCircleA1(sh, sz*sc*24);
+		yield;
+	}
+	Obj_Delete(sh);
+}
+
+function CreateHolyLaser(pX, pY, spd, ang, leng, width, dmg, penet, graphic, delay){
+	int lsr = ObjShot_Create(OBJ_CURVE_LASER);
+	ObjShot_Regist(lsr);
+	
+	ObjMove_SetPosition(lsr, pX, pY);
+	ObjMove_SetSpeed(lsr, spd);
+	ObjMove_SetAngle(lsr, ang);
+	ObjShot_SetGraphic(lsr, graphic);
+	ObjShot_SetDelay(lsr, delay);
+	
+	ObjLaser_SetLength(lsr, leng);
+	ObjLaser_SetRenderWidth(lsr, width*1.5);
+	ObjLaser_SetIntersectionWidth(lsr, width);
+	ObjRender_SetAlpha(lsr, 192);
+	
+	ObjShot_SetDamage(lsr, dmg);
+	ObjShot_SetPenetration(lsr, penet);
+	
+	ObjShot_SetAutoDelete(lsr, false);
+	ObjShot_SetEraseShot(lsr, true);
+	ObjShot_SetSpellFactor(lsr, true);
+	
+	return lsr;
+}

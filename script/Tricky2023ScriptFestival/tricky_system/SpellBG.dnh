@@ -1,0 +1,272 @@
+//Dedicated Spell Background Script
+
+let CSD = GetCurrentScriptDirectory;
+let MD = CSD~"../";
+let array = [];
+let stoptask = false;
+
+#include"./Event_Const.dnh"
+
+#include"../lib/includes/LoadingFunctions.dnh" //this defines EV_SPELLBG and stuff
+
+@Initialize {
+	LoadAllImagesInFolder(CSD~"spellbg");
+}
+
+@MainLoop {
+	yield;
+}
+
+@Event {
+	alternative(GetEventType)
+	case(EV_SPELLBG) {
+		let eventParam = GetEventArgument(0);
+		CreateSpellBackground(eventParam);
+	}
+	case(EV_SPELLBGEND) {
+		let eventParam = GetEventArgument(0);
+		StopSpellBG;
+	}
+}
+
+task CreateSpellBackground(arg){
+	let angle = 0;
+	let angle2 = 0;
+
+	let alpha = 0;
+	let alpha2 = 0;
+	let alpha3 = 0;
+
+	let mod = 0;
+	let mod2 = 0;
+
+	let obj1 = ObjPrim_Create(OBJ_SPRITE_2D);
+	let obj2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	let obj3 = ObjPrim_Create(OBJ_SPRITE_2D);
+	let obj4 = ObjPrim_Create(OBJ_SPRITE_2D);
+
+	alternative(arg)
+		case(0){
+			array = array ~ [obj1];
+			let path1 = CSD ~ "spellbg/JustinStaticBG.png";
+			ObjRender_SetBlendType(obj1, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj1, 0.24);
+			ObjPrim_SetTexture(obj1, path1);
+			ObjSprite2D_SetSourceRect(obj1, 0, 0, 750, 512);
+			ObjSprite2D_SetDestCenter(obj1);
+			ObjRender_SetPosition(obj1, (384/2), 448/2, 0);
+			ObjRender_SetScaleX(obj1, 1);
+			ObjRender_SetScaleY(obj1, 1);
+			Obj_SetValue(obj1, "maxalpha", 255);
+			
+			/*
+			array = array ~ [obj2];
+			let path2 = CSD ~ "spellbg/ashleyOutline.png";
+			ObjRender_SetBlendType(obj2, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj2, 0.24);
+			ObjPrim_SetTexture(obj2, path2);
+			ObjSprite2D_SetSourceRect(obj2, 0, 0, 1024, 1024);
+			ObjSprite2D_SetDestCenter(obj2);
+			ObjRender_SetPosition(obj2, (384/2)+12, 448/2, 0);
+			ObjRender_SetScaleX(obj2, 0.5);
+			ObjRender_SetScaleY(obj2, 0.5);
+			Obj_SetValue(obj2, "maxalpha", 150);
+			*/
+			
+			array = array ~ [obj3];
+			let path3 = CSD ~ "spellbg/JustinMovingBG.png";
+			ObjRender_SetBlendType(obj3, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj3, 0.24);
+			ObjPrim_SetTexture(obj3, path3);
+			ObjSprite2D_SetSourceRect(obj3, 0, 0, 1024, 1024);
+			ObjSprite2D_SetDestCenter(obj3);
+			ObjRender_SetPosition(obj3, (384/2), 448/2, 0);
+			ObjRender_SetScaleX(obj3, 0.5);
+			ObjRender_SetScaleY(obj3, 0.5);
+			Obj_SetValue(obj3, "maxalpha", 150);
+		}
+
+		case(1){
+			array = array ~ [obj1];
+			let path1 = CSD ~ "spellbg/RedrinStaticBG.png";
+			ObjRender_SetBlendType(obj1, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj1, 0.24);
+			ObjPrim_SetTexture(obj1, path1);
+			ObjSprite2D_SetSourceRect(obj1, 0, 0, 960, 540);
+			ObjSprite2D_SetDestCenter(obj1);
+			ObjRender_SetPosition(obj1, (384/2), 448/2, 0);
+			ObjRender_SetScaleX(obj1, 1);
+			ObjRender_SetScaleY(obj1, 1);
+			Obj_SetValue(obj1, "maxalpha", 255);
+			
+			/*
+			array = array ~ [obj2];
+			let path2 = CSD ~ "spellbg/ashleyOutline.png";
+			ObjRender_SetBlendType(obj2, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj2, 0.24);
+			ObjPrim_SetTexture(obj2, path2);
+			ObjSprite2D_SetSourceRect(obj2, 0, 0, 1024, 1024);
+			ObjSprite2D_SetDestCenter(obj2);
+			ObjRender_SetPosition(obj2, (384/2)+12, 448/2, 0);
+			ObjRender_SetScaleX(obj2, 0.5);
+			ObjRender_SetScaleY(obj2, 0.5);
+			Obj_SetValue(obj2, "maxalpha", 150);
+			*/
+			
+			array = array ~ [obj3];
+			let path3 = CSD ~ "spellbg/RedrinMovingBG.png";
+			ObjRender_SetBlendType(obj3, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj3, 0.24);
+			ObjPrim_SetTexture(obj3, path3);
+			ObjSprite2D_SetSourceRect(obj3, 0, 0, 1024, 1024);
+			ObjSprite2D_SetDestCenter(obj3);
+			ObjRender_SetPosition(obj3, (384/2)-2, 448/2, 0);
+			ObjRender_SetScaleX(obj3, 0.75);
+			ObjRender_SetScaleY(obj3, 0.75);
+			Obj_SetValue(obj3, "maxalpha", 150);
+		}
+	
+		case(2){
+			array = array ~ [obj1];
+			let path1 = CSD ~ "spellbg/kotohime0.png";
+			ObjRender_SetBlendType(obj1, BLEND_ALPHA);
+			Obj_SetRenderPriority(obj1, 0.24);
+			ObjPrim_SetTexture(obj1, path1);
+			ObjSprite2D_SetSourceRect(obj1, 0, 0, 1024, 1024);
+			ObjSprite2D_SetDestCenter(obj1);
+			ObjRender_SetPosition(obj1, 384/2, 448/2, 0);
+			ObjRender_SetScaleX(obj1, 0.5);
+			ObjRender_SetScaleY(obj1, 0.5);
+			Obj_SetValue(obj1, "maxalpha", 255);
+		}
+
+		case(3){
+			array = array ~ [obj1];
+			let path1 = CSD ~ "spellbg/tricky0.png";
+			ObjPrim_SetTexture(obj1, path1);
+			Obj_SetRenderPriorityI(obj1,23);
+			ObjRender_SetBlendType(obj1,BLEND_ALPHA);
+			ObjSprite2D_SetSourceRect(obj1, 0, 0, 1255, 1255);
+			ObjSprite2D_SetDestCenter(obj1);
+			ObjRender_SetPosition(obj1, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+			ObjRender_SetColor(obj1, 220, 220, 220);
+			ObjRender_SetScaleXYZ(obj1, 0.36, 0.36, NULL);
+			ObjRender_SetAlpha(obj1, 0);
+			Obj_SetValue(obj1, "maxalpha", 255);
+			
+			array = array ~ [obj2];
+			let path2 = CSD ~ "spellbg/tricky1.png";
+			ObjPrim_SetTexture(obj2, path2);
+			Obj_SetRenderPriorityI(obj2,22);
+			ObjRender_SetBlendType(obj2,BLEND_ALPHA);
+			ObjSprite2D_SetSourceRect(obj2, 0, 0, 500, 500);
+			ObjSprite2D_SetDestCenter(obj2);
+			ObjRender_SetAlpha(obj2, 0);
+			ObjRender_SetPosition(obj2, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+			///ObjRender_SetColor(obj2, 255, 0, 255-50);
+			ObjRender_SetScaleXYZ(obj2, 0.5, 0.5, NULL);
+			Obj_SetValue(obj2, "maxalpha", 255);
+			
+			array = array ~ [obj3];
+			let path3 = CSD ~ "spellbg/tricky1.png";
+			ObjPrim_SetTexture(obj3, path3);
+			Obj_SetRenderPriorityI(obj3,24);
+			ObjRender_SetBlendType(obj3,BLEND_ALPHA);
+			ObjSprite2D_SetSourceRect(obj3, 0, 0, 500, 500);
+			ObjSprite2D_SetDestCenter(obj3);
+			ObjRender_SetAlpha(obj3, 0);
+			ObjRender_SetPosition(obj3, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+			ObjRender_SetColor(obj3, 255, 200, 200);
+			ObjRender_SetScaleXYZ(obj3, 0.5, 0.5, NULL);
+			Obj_SetValue(obj3, "maxalpha", 50);
+		}
+	
+	loop{
+
+		if(alpha<255){ alpha+=6; }
+
+		if(arg==0 || arg ==1 || arg == 2 || arg == 3 || arg == 4){ ObjRender_SetAlpha(obj1, alpha); }
+
+		if(arg==0){ //if Hiroyuki spell BG
+			
+			if(alpha>=255){ //once the backgrounds fade in, start modulating alpha of top layer
+				alpha2 = 90+60*cos(mod2);
+				//ObjRender_SetAlpha(obj2, 120+max(0, 60*sin(mod2-90)));
+				ObjRender_SetAlpha(obj3, alpha2);
+				Obj_SetValue(obj3, "maxalpha", alpha2);
+				
+				mod2+=1;
+				if(mod2%360 > 90 && mod2%360 < 270){ mod2+=0.5; } //if it's a negative number, increase speed of modifier
+			}
+			else{
+				//ObjRender_SetAlpha(obj2, alpha/2.15);
+				ObjRender_SetAlpha(obj3, alpha/1.7); //fade in top layer with bottom layer
+				Obj_SetValue(obj3, "maxalpha", alpha/1.7);
+			}
+			ObjSprite2D_SetSourceRect(obj3, 0+(mod/1), 0-(mod/2), 1024+(mod/1), 1024-(mod/2));
+			//ObjRender_SetAlpha(obj2, 0);
+			mod-=0.75;
+		}
+		
+		if(arg==1){ //if Redrin spell BG
+			
+		if(alpha>=255){ //once the backgrounds fade in, start modulating alpha of top layer
+				alpha2 = 120+40*cos(mod2);
+				//ObjRender_SetAlpha(obj2, 120+max(0, 60*sin(mod2-90)));
+				ObjRender_SetAlpha(obj3, alpha2);
+				Obj_SetValue(obj3, "maxalpha", alpha2);
+				
+				mod2+=1;
+				if(mod2%360 > 90 && mod2%360 < 270){ mod2+=0.5; } //if it's a negative number, increase speed of modifier
+			}
+			else{
+				//ObjRender_SetAlpha(obj2, alpha/2.15);
+				ObjRender_SetAlpha(obj3, alpha/1.59375); //fade in top layer with bottom layer
+				Obj_SetValue(obj3, "maxalpha", alpha/1.59375);
+			}
+			ObjSprite2D_SetSourceRect(obj3, 0, 0+mod, 1024, 1024+mod);
+			//ObjRender_SetAlpha(obj2, 0);
+			mod+=1.5;
+		}
+
+		if(arg==5){
+			ObjRender_SetAlpha(obj1, alpha);
+			ObjSprite2D_SetSourceRect(obj1, 0+angle, 0-angle, 512+angle, 512-angle);
+		}
+
+		if(arg==3){
+			ObjSprite2D_SetSourceRect(obj2, 0+mod, 0+mod, 500*2+mod, 500*2+mod);
+			ObjSprite2D_SetSourceRect(obj3, 0-mod, 0-mod, 500*2-mod, 500*2-mod);
+			ObjSprite2D_SetDestCenter(obj2);
+			ObjSprite2D_SetDestCenter(obj3);
+			mod+=1.7/2;
+			if(alpha<255){ alpha+=255/90; }
+			ObjRender_SetAlpha(obj2, alpha);
+			ObjRender_SetAlpha(obj2, alpha);
+			ObjRender_SetAlpha(obj3, alpha/5.1);
+		}
+		
+		if(stoptask == true){ return; } 
+		
+		yield;
+	}
+}
+
+task StopSpellBG{
+	let alphacontrol = 34;
+	stoptask = true;
+	 loop(35){
+		ascent(i in 0..length(array)){
+			if(alphacontrol==0){ Obj_Delete(array[i]); erase(array, i); }
+			if(!Obj_IsDeleted(array[i])){
+				ObjRender_SetAlpha(array[i], alphacontrol*(Obj_GetValueD(array[i], "maxalpha", 255)/35)); 
+				erase(array, i);
+			}
+		}
+		alphacontrol--;
+		yield;
+	}	
+	array = [];	
+	yield;
+	stoptask = false;
+}

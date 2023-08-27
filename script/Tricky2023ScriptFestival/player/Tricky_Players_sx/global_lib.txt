@@ -1,0 +1,44 @@
+int objPlayer = GetPlayerObjectID();
+string CSD = GetCurrentScriptDirectory();
+
+bool isFocus = false;
+
+int hitboxObj = ObjPrim_Create(OBJ_SPRITE_2D);
+	
+int aFrame1 = 0;
+int aFrame2 = 0;
+int curr_graze_particles = 0;
+int MAX_GRAZE_PARTICLES = 30;
+int n = 1;
+int[] FindVictim;
+
+const int LBord = 0;
+const int UBord = 0;
+const int RBord = GetStgFrameWidth();
+const int DBord = GetStgFrameHeight();
+
+				// UF F
+float[] optDistance = [0, 0];
+float currDist = optDistance[0];
+int transitionfr = 15;
+float sz = 0.75;
+	
+string optTex = CSD ~ "./texture/";
+string grPart = optTex ~ "./particle.png";
+string exPart = optTex ~ "./explosion.png";
+string HITBOX = optTex ~ "./hitbox.png";
+string shotPath = CSD ~ "global_shotdata.txt";
+InstallFont(optTex ~ "./Cuprum.ttf");
+
+string[][] spellcardNames = 
+	[
+		["Conjury \"Aerostorm\"", "Conjury \"Holy\""],
+		["Perversion \"Roset Launcher\"", "Horticulture \"Growing the Seed of Evil\""],
+		["Cursed Aim \"Melting Point Negligence\"", "Unsafe Marksmanship \"Celebratory Gunfire\""]
+	];
+
+int SFXSCR = LoadScript(CSD~"./Control_Audio.txt");
+StartScript(SFXSCR);
+
+int EV_PLAY_SFX = EV_USER_PLAYER+42000;
+int EV_STOP_SFX = EV_USER_PLAYER+42001;

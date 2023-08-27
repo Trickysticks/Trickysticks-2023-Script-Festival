@@ -1,0 +1,945 @@
+//Cutin Script
+
+let CSD = GetCurrentScriptDirectory;
+let MD = GetModuleDirectory;
+
+#include"./Event_Const.dnh"
+#include"../lib/includes/Function_Audio.dnh"
+
+@Initialize {
+
+InstallFont(CSD ~ "Fonts/RiposteLight.ttf");
+//InstallFont(CSD ~ "Fonts/DelugiaMonoComplete.ttf");
+
+}
+
+@MainLoop {
+yield;
+}
+
+@Event {
+	alternative(GetEventType)
+	case(EV_DECLARESPELL) {
+		let eventParam = GetEventArgument(0);
+		let type = atoi(eventParam[0][0]);
+		alternative(type)
+		case(1){ ObjCutin_SetSpellcardS3(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0]); }
+		case(2) { ObjCutin_SetSpellcardS4(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0],eventParam[5][0],eventParam[6][0]); }
+		case(3) {  ObjCutin_LaunchS3(eventParam[1][0],eventParam[2][0],eventParam[3][0]); }
+	}
+}
+
+let current = GetCurrentScriptDirectory;
+let DEBUG = false;
+let CutinDifficulty = "";
+let SpellAttack_img = current~"img/SpellAttack.png"; 
+let img_SpellAttack = current~"img/SpellAttackText.png"; // Spell Declare
+let Alpha_HUD = [255, 255]; //top, bottom
+
+let NAZRIN = "NAZRIN";
+let BYAKUREN = "BYAKUREN";
+let KANAKO = "KANAKO";
+let MOKOU = "MOKOU";
+let AYA = "AYA";
+let YABUSAME = "LENEN";
+
+let LENEN = "LENEN";
+
+//If you have any questions or requests, send them to gtbot/TheGtbot (I go by either on different places)
+//Version 1.3
+
+task ObjCutin_SetSpellcardS3(SpellName, R, G, B){
+	let r = R;
+	let g = G;
+	let b = B;
+	let boss = GetEnemyBossObjectID[0];
+	let spells = Obj_GetValueD(boss, "Spellcards", []);
+	spells = spells~[[SpellName, r, g, b, "", ""]];
+	Obj_SetValue(boss, "Spellcards", spells);
+}
+
+task ObjCutin_SetSpellcardS4(SpellName, image, cuttype, R, G, B){
+	let r = R;
+	let g = G;
+	let b = B;
+	let boss = GetEnemyBossObjectID[0];
+	let spells = Obj_GetValueD(boss, "Spellcards", []);
+	spells = spells~[[SpellName, r, g, b, cuttype, image]];
+	Obj_SetValue(boss, "Spellcards", spells);
+}
+
+task ObjCutin_LaunchS3(type, image, difficulty){
+	CutinS3(type, image, difficulty);
+}
+
+task CutinS3(type, image, difficulty){
+        let const_imgPri = 0.29; //image priority (in 0-1 format)
+        let const_textPri = 0.75; //spellcard text priority (in 0-1 format)
+        let c_imgPri = const_imgPri;
+        let c_textPri = const_textPri;
+        let c_imgObj = ID_INVALID;
+        let spells = Obj_GetValueD(GetEnemyBossObjectID[0], "Spellcards", []);
+        let Type = spells[0][4];
+        let mimage = spells[0][5];
+        let boss = GetEnemyBossObjectID[0];
+        let spcount = length(spells);
+        CutinDifficulty = difficulty;
+        let IsSpellAttackAnimation = false;
+        if(!IsCommonDataAreaExists("cutin_History")){
+                CreateCommonDataArea("cutin_History");
+        }
+        LoadCommonDataAreaA1("cutin_History");
+ 
+ 
+        //if(length(Images)>6)
+        //      Images = [Images];
+        ////    Colors = [Colors];
+        //
+        //let Colors = [[r, g, b]];
+ 
+        descent(i in 0..spcount){SpellText(6*i, i);}
+        SpawnCutinImage(Type, mimage, 0);
+       
+       
+        let delay = 6;
+        while(!Obj_IsDeleted(boss)){
+                spells = Obj_GetValueD(GetEnemyBossObjectID[0], "Spellcards", []);
+                if(length(spells)!=spcount&&delay==0){
+                        delay = 6;
+                        SpellText(0, spcount);
+                        let newtype = spells[spcount][4];
+                        if(newtype == ""){newtype = Type;}
+                        SpawnCutinImage(newtype, spells[spcount][5], spcount);
+                        spcount++;
+                }
+                delay = max(delay-1, 0);
+                yield;
+        }
+       
+       
+ 
+        task FireCutinA1(x, y, angle, ispeed, itime, mspeed, mtime, img){      
+                if(IsSpellAttackAnimation){return;}    
+                let SpellCutin = CreateSimple2DImageA1(c_imgPri, img);
+                ObjRender_SetPosition(SpellCutin, x, y, 0);
+                ObjRender_SetAlpha(SpellCutin, 0);
+               
+                c_imgObj = SpellCutin;
+               
+                let len = itime;
+                ascent(x in 0..len){
+                        let mod = x/len;
+                        let locs = [ObjRender_GetX(SpellCutin), ObjRender_GetY(SpellCutin)];
+                        ObjRender_SetPosition(SpellCutin, floor(locs[0]+ispeed*cos(angle)), floor(locs[1]+ispeed*sin(angle)), 0);
+                       
+                        let alph = min(255, 255*(mod*2));
+                        ObjRender_SetAlpha(SpellCutin, alph);
+                        yield;
+                }
+               
+                len = mtime;
+                let nx = ObjRender_GetX(SpellCutin);
+                let ny = ObjRender_GetY(SpellCutin);
+                ascent(x in 0..len){
+                        nx += mspeed*cos(angle);
+                        ny += mspeed*sin(angle);
+                        ObjRender_SetPosition(SpellCutin, floor(nx), floor(ny), 0);
+                        yield;
+                }
+                //return;
+                len = mtime;
+                ascent(x in 0..len){
+                        let mod = x/len;
+                        let locs = [ObjRender_GetX(SpellCutin), ObjRender_GetY(SpellCutin)];
+                        ObjRender_SetPosition(SpellCutin, floor(locs[0]+ispeed*cos(angle)), floor(locs[1]+ispeed*sin(angle)), 0);
+                        yield;
+                }
+                Obj_Delete(SpellCutin);
+        }
+ 
+        task FireCutinA2(x, y, alpha, img, details){
+                if(IsSpellAttackAnimation){return;}
+               
+                if(length(img) < 10){
+                        ascent(i in 0..length(img)){
+                                FireCutinA2(x, y, alpha, img[i], details);
+                        }
+                        return;
+                }
+                //[spd, spdinc, ang, anginc, alphachange, time]
+                let SpellCutin = CreateSimple2DImageA1(c_imgPri, img);
+                ObjRender_SetPosition(SpellCutin, x, y, 0);
+                ObjRender_SetAlpha(SpellCutin, alpha);
+                Obj_SetRenderPriorityI(SpellCutin, 49);
+                let scale = 480 / 1600;
+                ObjRender_SetScaleXYZ(SpellCutin,scale,scale,scale);
+               
+                c_imgObj = SpellCutin;
+               
+                ascent(i in 0..length(details)){
+                        let nx = ObjRender_GetX(SpellCutin);
+                        let ny = ObjRender_GetY(SpellCutin);
+                        let info = details[i];
+                        let len = info[5];
+                        let alphinc = -(alpha-info[4])/len;
+                        let spdinc = -(info[0]-info[1])/len;
+                        let mspeed = info[0];
+                        let cangle = info[2];
+                        ascent(x in 0..len){
+                                mspeed+=spdinc;
+                                cangle+=info[3];
+                                nx += mspeed*cos(cangle);
+                                ny += mspeed*sin(cangle);
+                                ObjRender_SetPosition(SpellCutin, nx, ny, 0);
+                                yield;
+                                alpha = min(max(alpha+alphinc, 0), 255);
+                                ObjRender_SetAlpha(SpellCutin, alpha);
+                        }
+                }
+                Obj_Delete(SpellCutin);
+        }
+ 
+        task FireCutinB2(x, y, alpha, img, details){
+                if(IsSpellAttackAnimation){return;}
+                //[spd, spdinc, ang, anginc, alphachange, time]
+                let SpellCutin = CreateSimple2DImageA1(c_imgPri, img);
+                ObjRender_SetPosition(SpellCutin, x, y, 0);
+                ObjRender_SetAlpha(SpellCutin, alpha);
+               
+                c_imgObj = SpellCutin;
+               
+                ascent(i in 0..length(details)){
+                        let nx = ObjRender_GetX(SpellCutin);
+                        let ny = ObjRender_GetY(SpellCutin);
+                        let info = details[i];
+                        let len = info[5];
+                        let alphinc = -(alpha-info[4])/len;
+                        let spdinc = -(info[0]-info[1])/len;
+                        let mspeed = info[0];
+                        let cangle = info[2];
+                        ascent(x in 0..len){
+                                mspeed+=spdinc;
+                                cangle+=info[3];
+                                nx += mspeed*cos(cangle);
+                                ny += mspeed*sin(cangle);
+                                ObjRender_SetPosition(SpellCutin, nx, ny, 0);
+                                yield;
+                                alpha = min(max(alpha+alphinc, 0), 255);
+                                ObjRender_SetAlpha(SpellCutin, alpha);
+                        }
+                }
+                Obj_Delete(SpellCutin);
+        }
+ 
+        //newest version, TEMP VERSION
+        task FireCutinC1(x, y, alpha, img, details){
+                if(IsSpellAttackAnimation){return;}
+                if(length(img) < 10){
+                        ascent(i in 0..length(img)){
+                                FireCutinC1(x, y, alpha, img[i], details);
+                        }
+                        return;
+                }
+               
+                //[spd, spdinc, ang, anginc, alphachange, time, xoff, yoff]
+                let SpellCutin = CreateSimple2DImageA1(c_imgPri, img);
+                ObjRender_SetPosition(SpellCutin, x, y, 0);
+                ObjRender_SetAlpha(SpellCutin, alpha);
+               
+                c_imgObj = SpellCutin;
+               
+                ascent(i in 0..length(details)){
+                        let info = details[i];
+                        let nx = ObjRender_GetX(SpellCutin)+info[6];
+                        let ny = ObjRender_GetY(SpellCutin)+info[7];
+                        let len = info[5];
+                        let alphinc = -(alpha-info[4])/len;
+                        let spdinc = -(info[0]-info[1])/len;
+                        let mspeed = info[0];
+                        let cangle = info[2];
+                        ascent(x in 0..len){
+                                mspeed+=spdinc;
+                                cangle+=info[3];
+                                nx += mspeed*cos(cangle);
+                                ny += mspeed*sin(cangle);
+                                ObjRender_SetPosition(SpellCutin, nx, ny, 0);
+                                yield;
+                                alpha = min(max(alpha+alphinc, 0), 255);
+                                ObjRender_SetAlpha(SpellCutin, alpha);
+                        }
+                }
+                Obj_Delete(SpellCutin);
+        }
+ 
+ 
+        task FireCutinCtCA1(img, modif){
+                let SpellCutinBG = CreateSimple2DImageA1(c_imgPri, img);
+                let s = [GetTextureWidth(img), GetTextureHeight(img)];
+                ObjSprite2D_SetDestRect(SpellCutinBG, -s[0]*0.45, -s[1]*0.3, s[0]*0.55, s[1]*0.7);
+                ObjRender_SetPosition(SpellCutinBG, GetStgFrameWidth/2+56*modif, GetStgFrameHeight-16, 0);
+                ObjRender_SetAlpha(SpellCutinBG, 64);
+                ObjRender_SetScaleXYZ(SpellCutinBG, 3*modif, 3, 3);
+               
+                let SpellCutin = CreateSimple2DImageA1(c_imgPri+0.01, img);
+                ObjSprite2D_SetDestRect(SpellCutin, -s[0]*0.625, -s[1], s[0]*0.375, 0);
+                ObjRender_SetPosition(SpellCutin, GetStgFrameWidth/2+GetStgFrameWidth/2*modif-32*modif, GetStgFrameHeight, 0);
+                ObjRender_SetAlpha(SpellCutin, 0);
+               
+                c_imgObj = SpellCutin;
+               
+               
+                descent(i in 0..7){
+                        let mod = 1+i;
+                        ObjSprite2D_SetDestRect(SpellCutin, -s[0]*0.8*(1+i*0.5)*modif, -s[1]*0.625, s[0]*0.2*modif, s[1]*0.375);
+                        ObjRender_SetAlpha(SpellCutin, 255-255/7*i);
+                       
+                        ObjRender_SetScaleY(SpellCutinBG, 3-3/7*i);
+                        yield;
+                }
+                yield;
+               
+                descent(i in 0..73){
+                        ObjRender_SetX(SpellCutin, ObjRender_GetX(SpellCutin)+1.5/73*i*modif);
+                        ObjRender_SetY(SpellCutinBG, ObjRender_GetY(SpellCutinBG)-4/73*i);
+                        yield;
+                }
+                yield;
+               
+                ascent(i in 0..10){
+                        let mod = max(0, 1-i/7);
+                        let scl = 3+i/5;
+                        ObjSprite2D_SetDestRect(SpellCutin, -s[0]*0.8*modif, -s[1]*0.625*mod, s[0]*0.2*modif, s[1]*0.375*mod);
+                        ObjRender_SetScaleXYZ(SpellCutinBG, scl*modif, scl, scl);
+                        ObjRender_SetAlpha(SpellCutinBG, 64-64/10*i);
+                        ObjRender_SetY(SpellCutin, ObjRender_GetY(SpellCutin)-32/2);
+                        yield;
+                }
+               
+                Obj_Delete(SpellCutin);
+                Obj_Delete(SpellCutinBG);
+        }
+ 
+ 
+        function SpawnCutinImage(type, image, SpellNum){
+                //We use another "type" variable (lowercase t) so that
+                //spellcards set after the root function is called will play the
+                //new set cutin type as opposed to the original one
+                // same for image
+               
+                c_imgPri = const_imgPri;
+                c_textPri = const_textPri;
+                c_imgObj = ID_INVALID;
+                //We reset the priorities because some cutins may alter them when they are called
+               
+                let img_array = [image] ~ Obj_GetValueD(boss, "SpellImageLayer"~IntToString(SpellNum), []);
+                //img_array = img_array ~ 
+                //image = [image] ~ 
+               
+               
+                //[spd, spdinc, ang, anginc, alphachange, time, xoff, yoff]
+                if(type == "NAZRIN"){
+                        FireCutinA2(GetStgFrameWidth+208, GetStgFrameHeight/2-144, 0, img_array, //image
+                        [
+                                [20.6, 20.6, 158, 0, 255, 20],
+                                [0.65, 0.65, 158, 0, 255, 90],
+                                [20.6, 20.6, 158, 0, 255, 20]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "BYAKUREN"){
+                        FireCutinA2(-256, GetStgFrameHeight/2, 0, img_array,
+                        [
+                                [14, 14, 0, 0, 255, 30],
+                                [0.5, 0.5, 0, 0, 255, 90],
+                                [14, 14, 0, 0, 0, 30]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "KANAKO"){
+                        FireCutinA2(GetStgFrameWidth+180, GetStgFrameHeight/2-190, 0, img_array,
+                        [
+                                [30, 8, 144, 0, 192, 23],
+                                [8, 0, 144, 0, 255, 10],
+                                [0, 2.1, 270, 0, 255, 90],
+                                [2.1, 2.1, 270, 0, 255, 20],
+                                [2.1, 1, 270, 0, 0, 20]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "KANAKO_F"){
+                        FireCutinA2(GetStgFrameWidth+48, GetStgFrameHeight/2-190, 0, img_array,
+                        [
+                                [30, 8, 144, 0, 192, 23],
+                                [8, 0, 144, 0, 255, 10],
+                                [0, 2.1, 270, 0, 255, 90],
+                                [2.1, 2.1, 270, 0, 255, 20],
+                                [2.1, 1, 270, 0, 0, 20]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "TENSHI"){
+                        SpellAttackEffect(145);
+                }
+                else if(type == "KOKORO"){
+                        SpellAttackEffect(145);
+                }
+                else if(type == "MURASA"){
+                        FireCutinA2(GetStgFrameWidth/2, GetStgFrameHeight+144, 0, img_array,
+                        [
+                                [9, 6, 270, 0, 255, 20],
+                                [6, 1, 270, 0, 255, 70],
+                                [1, 0, 270, 0, 255, 20],
+                                [0, 3, 90, 0, 255, 10],
+                                [3, 12, 90, 0, 255, 10],
+                                [12, 15, 90, 0, 160, 10],
+                                [0, 0, 90, 0, 0, 20],
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "SHINKI"){
+                        FireCutinA2(GetStgFrameWidth/2, GetStgFrameHeight+232, 0, img_array,
+                        [
+                                [14, 14, 270, 0, 255, 30],
+                                [0.5, 0.5, 270, 0, 255, 90],
+                                [14, 14, 270, 0, 0, 30]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "HINA"){
+                        FireCutinA2(GetStgFrameWidth/2, GetStgFrameHeight/2-32, 0, img_array,
+                        [
+                                [7, 7, 0, 7, 208, 40],
+                                [7, 7, 7*40, 7, 208, 75],
+                                [7, 7, 7*115, 7, 0, 40]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "GHOST"){
+                        FireCutinA2(GetStgFrameWidth/2, GetStgFrameHeight/2-32, 0, img_array,
+                        [
+                                [7, 7, 0, 7, 224, 40],
+                                [7, 7, 7*40, 7, 224, 75],
+                                [7, 7, 7*115, 7, 0, 40]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "BUNBUNMARU"){
+                        SpellAttackEffect(145);
+                }
+                else if(type == "AYA"){
+                        //nothing goes here, but this is here to prevent errors
+                }
+                else if(type == "MOKOU"){
+                        //nothing goes here since the SpellText function handles this completely
+                }
+                else if(type == "REIMU"){
+                        FireCutinCtCA1(img_array[0], 1); //image
+                        if(length(image)>1){
+                                FireCutinCtCA1(image[1], -1);
+                        }
+                }
+                else if(type == "LENEN" || type == "YABUSAME"){
+                        FireCutinA2(GetStgFrameWidth+256, GetStgFrameHeight/2+48, 0, img_array,
+                        [
+                                [32, 1, 182, 0.1, 255, 30],
+                                [1, 1.25, 180, 14, 255, 10],
+                                [1.25, 1.5, 340, 0, 255, 80],
+                                [1.5, 2.5, 340, -15.75, 192, 10],
+                                [2.5, 31, 182.5, 0, 0, 20],
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+                else if(type == "CHROM"){
+                        CriticalEffect;
+                        FireCutinA2(GetStgFrameWidth+192+32, GetStgFrameHeight/2+16, 255, img_array,
+                        [
+                                [20, 20, 180, 0, 255, 15],
+                                [20, 10, 180, 0, 255, 5],
+                                [1.25, 1.25, 0, 180/70, 255, 70],
+                                [2, 8, 180, 0, 255, 5],
+                                [8, 17, 180, 0, 255, 7],
+                                [17, 17, 180, 0, 255, 40],
+                        ]
+                        );
+                }
+ 
+                else if(type == "DRUNK"){
+                //[spd, spdinc, ang, anginc, alphachange, time, xoff, yoff]
+                        FireCutinC1(GetStgFrameWidth/6*2-20, GetStgFrameHeight/2.1, 255, img_array,
+                        [
+                                [12, 12, 0, 0, 80, 9, 0, 0],
+                                [10, 10, 270, 0, 80, 11, 16, 196],
+                                [10, 8, 90, 0, 80, 11, 0, -196],
+                                [0, 0, 90, 0, 144, 1, -128, 8],
+                                [12, 12, 0, 0, 144, 11, 0, 0],
+                                [0.25, 0.25, 0, 0, 144, 100, 0, 0],
+                                [9, 9, 0, 0, 144, 10, 0, 0],
+                                [9, 9, 0, 0, 0, 10, 0, 0]
+                        ]
+                        );
+                        SpellAttackEffect(145);
+                }
+               
+                else{RaiseError("Not a valid cutin type.");}
+        }
+       
+        task SpellText(delay, num){
+                let tspell = spells[num];
+                let SpellName = tspell[0];
+                let r = atoi(tspell[1]);
+                let g = atoi(tspell[2]);
+                let b = atoi(tspell[3]);
+               
+                let Colors = [[r,g,b]];
+               
+                //These are long-looking common data group names
+                let SpellDataAttempt = SpellName~"|"~CutinDifficulty~"|"~GetPlayerID~"|"~"Attempt";
+                let SpellDataGet = SpellName~"|"~CutinDifficulty~"|"~GetPlayerID~"|"~"Get";
+                //This is actually the common data retrieval
+                let SpellValueAttempt = GetAreaCommonData("cutin_History", SpellDataAttempt, 0);
+                let SpellValueGet = GetAreaCommonData("cutin_History", SpellDataGet, 0);
+               
+               
+                if(!IsReplay&&!DEBUG&&num==0){
+                        SpellValueAttempt++;
+                        SetAreaCommonData("cutin_History", SpellDataAttempt, SpellValueAttempt);
+                        SaveCommonDataAreaA1("cutin_History");
+                }
+       
+                let xoff = GetStgFrameWidth-44;
+                let SpellBG = CreateSimple2DImageA2(c_textPri+0.01*max(0, 1-num), SpellAttack_img, 0, 0, 255, 31);
+                ObjSprite2D_SetDestRect(SpellBG, -224, -12, 32, 20);
+                ObjRender_SetPosition(SpellBG, xoff, 320+40*num, 0);
+                ObjRender_SetAlpha(SpellBG, 0);
+				
+                ObjRender_SetColor(SpellBG, Colors[0][0], Colors[0][1], Colors[0][2]);
+                xoff += 42; // plus 42 for the bonus text
+               
+                let SpellText = ObjText_Create;
+				//ObjText_SetFontCharacterSet(SpellText, "DEFAULT");
+                ObjText_SetText(SpellText,SpellName);
+                let fsize = 14;/*
+                if (length(SpellName) > 50) {
+                        fsize = 8;
+                }*/
+				//ObjText_SetFontType(SpellText, "Delugia Mono");
+				ObjText_SetFontType(SpellText, "Riposte Light");
+                ObjText_SetFontSize(SpellText,fsize);
+				ObjText_SetFontWeight(SpellText, 100);
+                ObjText_SetFontColorTop(SpellText,255,255,255);
+                ObjText_SetFontColorBottom(SpellText, Colors[0][0], Colors[0][1], Colors[0][2]);
+                ObjText_SetFontBorderType(SpellText,BORDER_FULL);
+                ObjText_SetFontBorderColor(SpellText,32,32,32);
+                ObjText_SetFontBorderWidth(SpellText,1);
+                ObjText_SetHorizontalAlignment(SpellText, ALIGNMENT_RIGHT);
+                ObjText_SetMaxWidth(SpellText, GetStgFrameWidth-24);
+                Obj_SetRenderPriority(SpellText, c_textPri+0.01*max(0, 1-num));
+                ObjRender_SetPosition(SpellText, 0, 320+40*num, 0);
+                ObjRender_SetAlpha(SpellText, 0);
+               
+               
+                let SpellInfo = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+                let bonus = 0;
+                let count = GetNumSize(bonus);
+                let scount = max(2, GetNumSize(SpellValueAttempt));
+                ObjPrim_SetTexture(SpellInfo, SpellAttack_img);
+                ObjRender_SetBlendType(SpellInfo, BLEND_ALPHA);
+                Obj_SetRenderPriority(SpellInfo, c_textPri+0.01);
+                ObjRender_SetY(SpellInfo, 36);
+                ObjRender_SetAlpha(SpellInfo, 0);
+               
+                //-------------Introduction--------------------------
+               
+                loop(delay){yield;}
+                let len = 30;
+                ascent(i in 0..len){
+                        let mod = i/len;
+                        let tmod = min(1, ((i*2)/len));
+                        ObjRender_SetScaleXYZ(SpellBG, 4-3*mod, 4-3*mod, 1);
+                        ObjRender_SetAlpha(SpellBG, 255*mod);
+                        ObjRender_SetX(SpellText, (GetStgFrameWidth-24)*(1-mod));
+                        //ObjRender_SetScaleXYZ(SpellText, 4-3*tmod, 4-3*tmod, 1);
+                        ObjRender_SetAlpha(SpellText, 255*tmod);
+                        yield;
+                }
+                loop(40){yield;}
+                let mov = 0;
+               
+                if(Type == "MOKOU"){SpellcardDeclareMovement([ObjRender_GetY(SpellText), 48+32*num, 0.175, 9]);loop(60){yield;}}
+                else{RegularSpellCardDeclare([ObjRender_GetY(SpellText), 32+32*num, 0.135, 12]);}
+                //32 is the offset from the top of the screen
+                //If using a system where the lifebar is on the boss rather than the top of the screen, 12 is a good value
+ 
+               
+                loop(delay*0.65){yield;}
+               
+                ascent(i in 0..80){
+                        let endspeed = 0.5+i/2.5;
+                        ObjRender_SetX(SpellBG, ObjRender_GetX(SpellBG)+endspeed);
+                        ObjRender_SetX(SpellText, ObjRender_GetX(SpellText)+endspeed);
+                        yield;
+                }
+               
+                Obj_Delete(SpellBG);
+                Obj_Delete(SpellText);
+               
+                function SpellcardDeclareMovement(dest){
+                        ObjRender_SetY(SpellInfo, 24+dest[1]);
+                        while(dest[0]>dest[1]){
+                                dest[0] = ObjRender_GetY(SpellText);
+                                mov = min(mov+dest[2], (dest[0]-dest[1])/dest[3]+0.125);
+                                ObjRender_SetY(SpellBG, dest[0]-mov);
+                                ObjRender_SetY(SpellText, dest[0]-mov);
+                                yield;
+                        }
+                }
+               
+                function RegularSpellCardDeclare(dest){
+                        if(num!=0){Obj_Delete(SpellInfo);}
+                        SpellcardDeclareMovement(dest);
+                        ascent(i in 0..20){
+                                ObjRender_SetAlpha(SpellInfo, 255/20*i);
+                                DrawScoreBonus;
+                                yield;
+                        }
+                        let timerf = ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_ORGTIMERF);
+                        let startdiff = timerf-(timerf-5*60);
+                        while(!Obj_IsDeleted(boss)){
+                                ObjRender_SetAlpha(SpellBG, Alpha_HUD[0]);
+                                ObjRender_SetAlpha(SpellText, Alpha_HUD[0]);
+                                ObjRender_SetAlpha(SpellInfo, Alpha_HUD[0]);
+                               
+                        //      let modif = min(1, ((ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMERF))/(ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_ORGTIMERF)-startdiff)));
+                        //      bonus = ((sscore*0.20)+(sscore*((modif)*0.80)));
+                                DrawScoreBonus;
+                                yield;
+                        }
+                        Obj_Delete(SpellInfo);
+                       
+                        if(bonus>=1&&ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMERF)>0){
+                        //      GotSpellCard(bonus);
+                        //      AddScore(bonus);
+                                if(!IsReplay&&!DEBUG&&num==0){
+                                        SpellValueGet++;
+                                        SetAreaCommonData("cutin_History", SpellDataGet, SpellValueGet);
+                                        SaveCommonDataAreaA1("cutin_History");
+                                }
+                        }else{
+                        //      FailedSpellCard;
+                        }
+                }
+                sub DrawScoreBonus{
+                        if(GetPlayerY<128+32*length(spells)){Alpha_HUD[0] = max(Alpha_HUD[0]-10, 85);}else{Alpha_HUD[0] = min(Alpha_HUD[0]+11, 255);}
+                       
+                        ObjSpriteList2D_ClearVertexCount(SpellInfo);
+                               
+                        ObjSpriteList2D_SetSourceRect(SpellInfo, 0, 48, 128, 60);
+                        ObjSpriteList2D_SetDestCenter(SpellInfo);
+                        ObjRender_SetX(SpellInfo, xoff-130);
+                        ObjSpriteList2D_AddVertex(SpellInfo);
+                        //Bonus Score
+                        bonus = ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_SPELL_SCORE);
+                        bonus = min(99999999, bonus);
+                        count = GetNumSize(bonus);
+                        let listNum = DigitToArray(bonus, count);
+                        let objScene = GetEnemyBossSceneObjectID;
+                        if(ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) +
+                        ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SPELL_COUNT) == 0){
+                                ascent(iObj in 0 .. count){
+                                        let num = listNum[iObj];
+                                        ObjRender_SetX(SpellInfo, xoff-94-(8*count) + iObj * 7);
+                                        ObjSpriteList2D_SetSourceRect(SpellInfo, num * 8, 64, (num + 1) * 8, 76);
+                                        ObjSpriteList2D_SetDestCenter(SpellInfo);
+                                        ObjSpriteList2D_AddVertex(SpellInfo);
+                                }
+                        }else{
+                                        bonus = 0;
+                                        ObjRender_SetX(SpellInfo, xoff-131);
+                                        ObjSpriteList2D_SetSourceRect(SpellInfo, 144, 48, 176, 60);
+                                        ObjSpriteList2D_SetDestCenter(SpellInfo);
+                                        ObjSpriteList2D_AddVertex(SpellInfo);
+                        }
+                        //History
+                        listNum = DigitToArray(SpellValueGet, scount) ~ [10] ~ DigitToArray(SpellValueAttempt, scount);
+                               
+                        ascent(iObj in 0 .. scount*2+1){
+                                let num = listNum[iObj];
+                                ObjRender_SetX(SpellInfo, xoff-58 + iObj * 8);
+                                ObjSpriteList2D_SetSourceRect(SpellInfo, num * 8, 64, (num + 1) * 8, 76);
+                                ObjSpriteList2D_SetDestCenter(SpellInfo);
+                                ObjSpriteList2D_AddVertex(SpellInfo);
+                        }
+                }
+        }
+       
+        task SpellAttackEffect(alphamax){
+                if(IsSpellAttackAnimation){return;}
+                IsSpellAttackAnimation = true;
+                let alpha = 1;
+                let GetCenterX = GetStgFrameWidth/2;
+                let GetCenterY = GetStgFrameHeight/2;
+                Octagon(GetCenterX*2, GetCenterY*2, -1.15, 180, 1);
+                Octagon(GetCenterX*2, GetCenterY*2, 1.05, 240, 0);
+                Octagon(GetCenterX*2, GetCenterY*2, 1.05, 295, 0);
+                Octagon(GetCenterX/5, GetCenterY/5, 0.75, 170, 1);
+               
+                ascent (i in 0..5){
+                        Line(GetCenterX, GetCenterY+i*75-75-95, 1.5);
+                }
+                ascent (i in 0..5){
+                        Line(GetCenterX, GetCenterY+i*75-37.5-95, -1.5);
+                }
+               
+                loop(15){yield;}
+                ascent(i in 0..20){
+                        alpha = 0.1+alphamax/20*i;
+                        yield;
+                }
+                loop(110){yield;}
+                descent(i in 0..20){
+                        alpha = alphamax/20*i;
+                        yield;
+                }
+               
+                IsSpellAttackAnimation = false;
+               
+                task Line(mx, my, posinc){
+                        let objSpellAttack = ObjPrim_Create(OBJ_SPRITE_2D);
+                        ObjRender_SetBlendType(objSpellAttack, BLEND_ALPHA);
+                        Obj_SetRenderPriority(objSpellAttack, 0.75);
+                        ObjPrim_SetTexture(objSpellAttack, img_SpellAttack);
+                        ObjSprite2D_SetSourceRect(objSpellAttack, 0, 0, 768, 16);
+                        ObjSprite2D_SetDestRect(objSpellAttack, -384, -8, 384, 8);
+                        let LineX = 0;
+                        ObjRender_SetPosition(objSpellAttack, mx, my, 0);
+                        ObjRender_SetAngleZ(objSpellAttack, -35);
+                        while(alpha>0){
+                                LineX += posinc;
+                                ObjSprite2D_SetSourceRect(objSpellAttack, LineX, 0, 768+LineX, 16);
+                                ObjRender_SetAlpha(objSpellAttack, alpha);
+                                yield;
+                        }
+                        Obj_Delete(objSpellAttack);
+                }
+       
+                task Octagon(mx, my, spininc, dist, size){
+               
+                        let countVertex = 16;
+                        let listRadius = [];
+                        loop(countVertex){
+                                listRadius = listRadius ~ [0];
+                        }
+ 
+                        let objOutline = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+                        ObjPrim_SetPrimitiveType(objOutline, PRIMITIVE_TRIANGLESTRIP);
+                        ObjPrim_SetVertexCount(objOutline, countVertex);
+                        ObjRender_SetBlendType(objOutline, BLEND_ALPHA);
+                        Obj_SetRenderPriority(objOutline, 0.76);
+                        ObjPrim_SetTexture(objOutline, img_SpellAttack);
+						ObjRender_SetAlpha(objOutline, 0);
+                        ascent (iVert in 0..countVertex/2){
+                                let left = iVert * 128;
+                                let indexVert = iVert * 2;
+                                ObjPrim_SetVertexUVT(objOutline, indexVert + 0, left, 0);
+                                ObjPrim_SetVertexUVT(objOutline, indexVert + 1, left, 16);
+                        }                      
+       
+                        let frame = 0;
+                        let rRate = 1;
+                        let spin = 0;
+       
+                        while(alpha>0){
+                                spin+=spininc;
+                                VertexSize;
+                                ObjRender_SetPosition(objOutline, mx, my, 0);
+                                ObjRender_SetAngleZ(objOutline, spin);
+                                ObjRender_SetAlpha(objOutline, alpha);
+								
+                                frame++;
+                                yield;
+                        }
+                        Obj_Delete(objOutline);
+                       
+                        task VertexSize{       
+                                if(frame>=35){return;}
+                                ascent (iVert in 0..countVertex/2){
+                                        let indexVert = iVert * 2;
+                                        let angle = (360 / (countVertex / 2 - 1) * iVert);
+ 
+                                        let vx1 = listRadius[indexVert] * cos(angle);
+                                        let vy1 = listRadius[indexVert] * sin(angle);
+                                        ObjPrim_SetVertexPosition(objOutline, indexVert + 0, vx1, vy1, 0);
+ 
+                                        let vx2 = listRadius[indexVert+1] * cos(angle);
+                                        let vy2 = listRadius[indexVert+1] * sin(angle);
+                                        ObjPrim_SetVertexPosition(objOutline, indexVert + 1, vx2, vy2, 0);
+ 
+                                        let dr = (dist * rRate - listRadius[indexVert]) / 16;
+                                        listRadius[indexVert] = listRadius[indexVert] + dr;
+                                        if(frame>size){
+                                                listRadius[indexVert + 1] = listRadius[indexVert + 1] + dr;
+                                        }
+                                }
+                        }
+                }
+        }
+ 
+        task CriticalEffect{
+                let CritTexture = "ChromCritChance";
+                if(!CreateRenderTarget(CritTexture)){
+                RaiseError("Not enough VRAM to proceed.\nTry restarting the game and lowering the graphics quality.");}
+ 
+               
+                c_imgPri = 0.92;
+               
+                let mask = ObjPrim_Create(OBJ_SPRITE_2D);
+                Obj_SetRenderPriorityI(mask, 91);
+                ObjPrim_SetTexture(mask, NULL);
+                ObjRender_SetColor(mask, 255, 255, 255);
+                ObjSprite2D_SetSourceRect(mask, 0, 0, 1, 1);
+                ObjSprite2D_SetDestRect(mask, -GetStgFrameWidth/2, -64, GetStgFrameWidth/2, 64);
+                ObjRender_SetPosition(mask, GetStgFrameWidth/2+32, GetStgFrameHeight/2-64, 0);
+               
+                let bg = ObjPrim_Create(OBJ_SPRITE_2D);
+                Obj_SetRenderPriorityI(bg, 92);
+                ObjPrim_SetTexture(bg, NULL);
+                ObjRender_SetColor(bg, 128, 80, 184);
+                ObjSprite2D_SetSourceRect(bg, 0, 0, 1, 1);
+                ObjSprite2D_SetDestRect(bg, 0, 0, GetStgFrameWidth, GetStgFrameHeight);
+               
+                let objShader = ObjPrim_Create(OBJ_SPRITE_2D);
+                ObjShader_SetShaderF(objShader, GetCurrentScriptDirectory ~ "mask.hlsl");
+                ObjShader_SetTechnique(objShader, "TecMask");
+ 
+               
+                Obj_SetVisible(c_imgObj, false);
+                Obj_SetVisible(bg, false);
+               
+                DoRenderTexture;
+               
+                SetShaderI(objShader, 91, 91);
+       
+               
+               
+                ascent(i in 0..5){
+                        DoRenderTexture;
+                        ObjRender_SetScaleY(mask, 1.25/5*i);
+                        yield;
+                }
+               
+                RenderMaskSquish;
+                ascent(i in 0..95){
+                        DoRenderTexture;
+                        let mod = min(1, 1+cos(i*6-180));
+                        ObjRender_SetColor(bg, 128+127*mod, 80+175*mod, 184+71*mod);
+                        yield;
+                }
+               
+                descent(i in 0..10){
+                        DoRenderTexture;
+                        ObjRender_SetScaleY(mask, 1/10*i);
+                        yield;
+                }
+               
+               
+               
+                task RenderMaskSquish{
+                        descent(i in 0..50){
+                                ObjRender_SetScaleY(mask, 1+min(0.25, i^2/10000));
+                                yield;
+                        }
+                }
+               
+                sub DoRenderTexture{
+                        Obj_SetVisible(c_imgObj, true);
+                        Obj_SetVisible(bg, true);
+                        SetInvalidRenderPriorityA1(92, 92);
+                        RenderToTextureA1(CritTexture, 92, 92, true);
+                        ObjShader_SetTexture(objShader, "textureMask_", CritTexture);
+                        Obj_SetVisible(c_imgObj, false);
+                        Obj_SetVisible(bg, false);
+                        ClearInvalidRenderPriority;
+                }
+               
+        }
+}
+
+task FadeInA1(obj, ftime){
+	ascent(i in 0..ftime){
+		ObjRender_SetAlpha(obj, 255/ftime*i);
+		yield;
+	}
+}
+task FadeInB1(obj, alpha, ftime){
+	ascent(i in 0..ftime){
+		ObjRender_SetAlpha(obj, alpha/ftime*i);
+		yield;
+	}
+}
+
+task FadeOutA1(obj, ftime){
+	descent(i in 0..ftime){
+		ObjRender_SetAlpha(obj, 255/ftime*i);
+		yield;
+	}
+}
+
+task FadeOutB1(obj, initalpha, ftime){
+	descent(i in 0..ftime){
+		ObjRender_SetAlpha(obj, initalpha/ftime*i);
+		yield;
+	}
+}
+
+function CreateSimple2DImageA1(pri, image){
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+	Obj_SetRenderPriority(obj, pri);
+	ObjPrim_SetTexture(obj, image);
+	let test = [GetTextureWidth(image), GetTextureHeight(image)];
+	ObjSprite2D_SetSourceRect(obj, 0, 0, test[0]-1, test[1]-1);
+	ObjSprite2D_SetDestRect(obj, -(test[0]/2+0.5), -(test[1]/2), (test[0]/2), (test[1]/2));
+	return obj;
+}
+
+function CreateSimple2DImageA2(pri, image, x1, y1, x2, y2){
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+	Obj_SetRenderPriority(obj, pri);
+	ObjPrim_SetTexture(obj, image);
+	ObjSprite2D_SetSourceRect(obj, x1, y1, x2, y2);
+	ObjSprite2D_SetDestCenter(obj);
+	return obj;
+}
+
+function DigitToArray(digit, count){
+	let res = [];
+	digit = truncate(digit);
+
+	loop{
+		let tnum = truncate(digit % 10);
+		digit /= 10;
+		res = [tnum] ~ res;
+		if(truncate(digit) == 0){break;}
+	}
+
+	loop(max(0, count - length(res))){
+		res = [0] ~ res;
+	}
+
+	return res;
+}
+
+function GetNumSize(value){
+	if(value<=1){return 1;}
+	else{return truncate(log10(value))+1;}
+}

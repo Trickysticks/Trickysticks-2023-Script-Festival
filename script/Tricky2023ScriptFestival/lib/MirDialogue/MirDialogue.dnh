@@ -1,0 +1,231 @@
+let EventObjList_Left = [];
+let EventObjAlpha_Left = [];
+let EventCharTalking_Left = [];
+let EventCharPresent_Left = [];
+let EventObjList_Right = [];
+let EventObjAlpha_Right = [];
+let EventCharTalking_Right = [];
+let EventCharPresent_Right = [];
+let EventRTN = "Event Render Target Name";
+let EventCDFlag = "Event Active?";
+let EventStep = "Event Step";
+
+let PlayerShot = GetCurrentScriptDirectory~"se_player_shot.wav";
+let pathSystem_Speech = GetCurrentScriptDirectory~"speech.png";
+
+function CreateDialogueSprite ( let texture, let priorityInt, let rects, let center ) {
+		// rects = 1-dimensional, size 4
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, texture);
+		Obj_SetRenderPriorityI(obj, priorityInt);
+		ObjSprite2D_SetSourceRect(obj, rects[0], rects[1], rects[2], rects[3]);
+		ObjSprite2D_SetDestRect(obj, -center[0], -center[1], rects[2]-rects[0]-center[0], rects[3]-rects[1]-center[1]);
+		return obj;
+	}
+
+function InitializeEvent(let numLeft, let numRight) {
+	LoadSound(PlayerShot);
+	SetForbidPlayerShot(true); SetForbidPlayerSpell(true);
+	SetCommonData(EventCDFlag, true);
+	SetCommonData(EventStep, 0);
+	CreateRenderTarget(EventRTN);
+	loop(numLeft) {
+		let obj = CreateDialogueSprite("", 85, [0, 0, 1023, 1023], [512, 512]);
+		//ObjPrim_SetTexture(obj, talk);
+		ObjRender_SetPosition(obj, GetStgFrameLeft+320-256-192, GetStgFrameTop+GetStgFrameHeight+32, 0);
+		EventObjList_Left = EventObjList_Left ~ [ obj ];
+		EventCharTalking_Left = EventCharTalking_Left ~ [ false ];
+		EventCharPresent_Left = EventCharPresent_Left ~ [ false ];
+		EventObjAlpha_Left = EventObjAlpha_Left ~ [ 0 ];
+	}
+	loop(numRight) {
+		let obj = CreateDialogueSprite("", 85, [0, 0, 1023, 1023], [512, 512]);
+		//ObjPrim_SetTexture(obj, talk);
+		ObjRender_SetPosition(obj, GetStgFrameLeft+320+256+192, GetStgFrameTop+GetStgFrameHeight+32, 0);
+		EventObjList_Right = EventObjList_Right ~ [ obj ];
+		EventCharTalking_Right = EventCharTalking_Right ~ [ false ];
+		EventCharPresent_Right = EventCharPresent_Right ~ [ false ];
+		EventObjAlpha_Right = EventObjAlpha_Right ~ [ 0 ];
+	}
+	HandleEventLogic;
+}
+
+function FinalizeEvent {
+	ascent(i in 0..length(EventObjList_Left)) {
+		Obj_Delete(EventObjList_Left[i]);
+	}
+	EventObjList_Left = []; EventCharTalking_Left = []; EventCharPresent_Left = [];
+	ascent(i in 0..length(EventObjList_Right)) {
+		Obj_Delete(EventObjList_Right[i]);
+	}
+	EventObjList_Right = []; EventCharTalking_Right = []; EventCharPresent_Right = [];
+	RemoveTexture(EventRTN);
+	SetCommonData(EventCDFlag, false);
+	SetCommonData(EventStep, 0);
+	SetForbidPlayerShot(false); SetForbidPlayerSpell(false);
+}
+
+task HandleEventLogic {
+	while(OnEventEx) {
+		ascent(i in 0..length(EventObjList_Left)) {
+			let obj = EventObjList_Left[i];
+			let talking = EventCharTalking_Left[i];
+			let here = EventCharPresent_Left[i];
+			ObjRender_SetPosition(obj, ObjRender_GetX(obj)+(320-256+[-192, [0, 64][talking]][here]-ObjRender_GetX(obj))/4, ObjRender_GetY(obj)+(GetStgFrameHeight+32-[0, [48, 96][talking]][here]-ObjRender_GetY(obj))/4, 0);
+			Obj_SetRenderPriorityI(obj, 84+[0, 1][talking]);
+			EventObjAlpha_Left[i] = EventObjAlpha_Left[i] + ([0, [128, 255][talking]][here] - EventObjAlpha_Left[i])/4;
+			let alpha = EventObjAlpha_Left[i];
+			ObjRender_SetAlpha(obj, alpha);
+		}
+		ascent(i in 0..length(EventObjList_Right)) {
+			let obj = EventObjList_Right[i];
+			let talking = EventCharTalking_Right[i];
+			let here = EventCharPresent_Right[i];
+			ObjRender_SetPosition(obj, ObjRender_GetX(obj)+(320+256+[192, [0, -64][talking]][here]-ObjRender_GetX(obj))/4, ObjRender_GetY(obj)+(GetStgFrameHeight+32-[0, [48, 96][talking]][here]-ObjRender_GetY(obj))/4, 0);
+			Obj_SetRenderPriorityI(obj, 84+[0, 1][talking]);
+			EventObjAlpha_Right[i] = EventObjAlpha_Right[i] + ([0, [128, 255][talking]][here] - EventObjAlpha_Right[i])/4;
+			let alpha = EventObjAlpha_Right[i];
+			ObjRender_SetAlpha(obj, alpha);
+		}
+		yield;
+	}
+}
+
+task SetEventStepEx(let num) {
+	SetCommonData(EventStep, num);
+}
+function GetEventStepEx {
+	return GetCommonData(EventStep, 0);
+}
+function OnEventEx {
+	return GetCommonData(EventCDFlag, false);
+}
+function SetCutinGraphic(let LeftRight, let charID, let type, let dispX, let dispY, flip) {
+	let obj = [EventObjList_Left, EventObjList_Right][LeftRight][charID];
+	ObjPrim_SetTexture(obj, type);
+	if(flip==true){ ObjRender_SetScaleX(obj, -1); }
+	else{ ObjRender_SetScaleX(obj, 1); }
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 1023, 1023);
+	ObjSprite2D_SetDestRect(obj, -256-dispX, -256-dispY, 256-dispX, 256-dispY);
+}
+function SetCharStatusTalking(let LeftRight, let charID, let talking) {
+	alternative(LeftRight)
+	case(0) {
+		EventCharTalking_Left[charID] = talking;
+	}
+	case(1) {
+		EventCharTalking_Right[charID] = talking;
+	}
+}
+function SetCharStatusPresent(let LeftRight, let charID, let talking) {
+	alternative(LeftRight)
+	case(0) {
+		EventCharPresent_Left[charID] = talking;
+	}
+	case(1) {
+		EventCharPresent_Right[charID] = talking;
+	}
+}
+
+function SetEventText(let LeftRight, let bubbletype, let linetext, let time) {
+
+let h = [48, 63, 56, 56, 64, 79, 72, 72][bubbletype];
+let y = [0, 49, 112, 168, 224, 289, 368, 440][bubbletype];
+let linelength = 0;
+
+	let objText = ObjText_Create();
+	ObjText_SetText(objText, linetext);
+	
+		ObjText_SetFontType(objText, "Corbel");
+		ObjText_SetFontSize(objText, 22);
+		ObjRender_SetY(objText, 20);
+		ObjText_SetLinePitch(objText, -6);
+	
+	Obj_SetRenderPriorityI(objText, 80);
+	ObjText_SetFontColorTop(objText, 0, 0, 0);
+	ObjText_SetFontColorBottom(objText, 0, 0, 0);
+	ObjText_SetAutoTransCenter(objText, false);
+	
+	linelength = ObjText_GetTotalWidth(objText);
+	
+	ObjRender_SetX(objText, 32+(linelength)*LeftRight);
+	ObjRender_SetScaleX(objText, ((-1)^LeftRight));
+	
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(obj, 80);
+	ObjPrim_SetVertexCount(obj, 6 * ( ceil((linelength-16)/16) + 2 ) );
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(obj, pathSystem_Speech);
+	//ObjRender_SetPosition(obj, 320-(160*((-1)^LeftRight)), GetStgFrameHeight-160, 0);
+	//ObjRender_SetPosition(objText, 320-(160*((-1)^LeftRight)) + 32, GetStgFrameHeight-160 + 20, 0);
+	let len = 0;
+	ObjPrim_SetVertexUVT(obj, 0, 0, y+0);
+	ObjPrim_SetVertexUVT(obj, 1, 48, y+0);
+	ObjPrim_SetVertexUVT(obj, 2, 0, y+h);
+	ObjPrim_SetVertexUVT(obj, 3, 48, y+h);
+	ObjPrim_SetVertexUVT(obj, 4, 48, y+0);
+	ObjPrim_SetVertexUVT(obj, 5, 0, y+h);
+	ObjPrim_SetVertexPosition(obj, 0, 0, 0, 0);
+	ObjPrim_SetVertexPosition(obj, 1, 48, 0, 0);
+	ObjPrim_SetVertexPosition(obj, 2, 0, h, 0);
+	ObjPrim_SetVertexPosition(obj, 3, 48, h, 0);
+	ObjPrim_SetVertexPosition(obj, 4, 48, 0, 0);
+	ObjPrim_SetVertexPosition(obj, 5, 0, h, 0);
+	len+=48;
+	ascent(i in 0..ceil((linelength-16)/16)) {
+		ObjPrim_SetVertexUVT(obj, 12+i*6, 48, y+0);
+		ObjPrim_SetVertexUVT(obj, 13+i*6, 64, y+0);
+		ObjPrim_SetVertexUVT(obj, 14+i*6, 48, y+h);
+		ObjPrim_SetVertexUVT(obj, 15+i*6, 64, y+h);
+		ObjPrim_SetVertexUVT(obj, 16+i*6, 64, y+0);
+		ObjPrim_SetVertexUVT(obj, 17+i*6, 48, y+h);
+		ObjPrim_SetVertexPosition(obj, 12+i*6, len+0, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 13+i*6, len+16, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 14+i*6, len+0, h, 0);
+		ObjPrim_SetVertexPosition(obj, 15+i*6, len+16, h, 0);
+		ObjPrim_SetVertexPosition(obj, 16+i*6, len+16, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 17+i*6, len+0, h, 0);
+		len+=16;
+	}
+	ObjPrim_SetVertexUVT(obj, 6, 64, y+0);
+	ObjPrim_SetVertexUVT(obj, 7, 96, y+0);
+	ObjPrim_SetVertexUVT(obj, 8, 64, y+h);
+	ObjPrim_SetVertexUVT(obj, 9, 96, y+h);
+	ObjPrim_SetVertexUVT(obj, 10, 96, y+0);
+	ObjPrim_SetVertexUVT(obj, 11, 64, y+h);
+	ObjPrim_SetVertexPosition(obj, 6, len+0, 0, 0);
+	ObjPrim_SetVertexPosition(obj, 7, len+32, 0, 0);
+	ObjPrim_SetVertexPosition(obj, 8, len+0, h, 0);
+	ObjPrim_SetVertexPosition(obj, 9, len+32, h, 0);
+	ObjPrim_SetVertexPosition(obj, 10, len+32, 0, 0);
+	ObjPrim_SetVertexPosition(obj, 11, len+0, h, 0);
+	RenderToTextureB1(EventRTN, obj, true);
+	RenderToTextureB1(EventRTN, objText, false);
+	Obj_Delete(obj);
+	Obj_Delete(objText);
+
+	let objBalloon = CreateDialogueSprite(EventRTN, 85, [0, 0, ceil((linelength-16)/16)*16 + 80, h], [0, 0]);
+	ObjRender_SetPosition(objBalloon, 320-(160*((-1)^LeftRight)), GetStgFrameHeight-160, 0);
+	let scale = 15; let fin = true; let t = (|time|);
+	while(fin) {
+		ObjRender_SetScaleXYZ(objBalloon, ((-1)^LeftRight)*cos(scale*90/15), 1, 0);
+		if(scale > 0) { scale--; }
+		if(time == 0) {
+			if(scale == 0 && GetVirtualKeyState(VK_SHOT)==KEY_PUSH) { fin = false; }
+			if(scale < 12 && GetVirtualKeyState(VK_USER1)!=KEY_FREE) { fin= false; }
+		} else if(time > 0) {
+			if(scale == 0) { t--; if(t == 0) { fin = false; } }
+		} else if(time < 0) {
+			if(scale == 0) { t--; if(t == 0 && (GetVirtualKeyState(VK_SHOT)==KEY_PUSH || GetVirtualKeyState(VK_USER1)!=KEY_FREE)) { fin = false; } }
+		}
+		yield;
+	}
+	PlaySE(PlayerShot);
+	Obj_Delete(objBalloon);
+	yield;
+}
+
+function Talking ( which ) {
+	SetCharStatusTalking(0, 0, which == 0);
+	SetCharStatusTalking(1, 0, which == 1);
+}

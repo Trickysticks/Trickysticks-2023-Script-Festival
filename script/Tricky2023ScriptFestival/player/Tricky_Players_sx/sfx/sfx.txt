@@ -1,0 +1,12 @@
+let BLAST = current ~ "sfx/BLAST.wav";
+let BOOM = current ~ "sfx/boom.wav";
+let CHARGE = current ~ "sfx/se_ch00.wav";
+let DIE = current ~ "sfx/DIE.wav";
+let EXPLODE = current ~ "sfx/se_enep02.wav";
+let EXTEND = current ~ "sfx/se_extend2.wav";
+let GRAZE = current ~ "sfx/GRAZE.wav";
+let POWER = current ~ "sfx/POWER.wav";
+let SHOOT = current ~ "sfx/SHOOT.wav";
+let SHOT = current ~ "sfx/SHOT.wav";
+let SPELL = current ~ "sfx/SPELL.wav";
+let TYPE = current ~ "sfx/type.wav";

@@ -1,0 +1,555 @@
+#TouhouDanmakufu
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Cole Spell 4"]
+#Background["./NamelessPath.dnh"]
+#Player["./../lib/TrickyPlayer/Tricky.dnh"]
+//#BGM["./../sfx/bgm/bgm2.ogg"]
+
+#include "./../lib/TerraShot1x/shot_const.dnh"
+#include "./../lib/includes/BossIncludes.dnh"
+
+
+let globalFrame = 0;
+let targetFrame = 0;
+let shotDamageRate = 5;
+let bombDamageRate = 5;
+
+@Event{
+	alternative(GetEventType())
+		case(EV_REQUEST_LIFE){ SetScriptResult(1000); }
+		case(EV_REQUEST_TIMER){ SetScriptResult(999); }
+		case(EV_REQUEST_SPELL_SCORE){ SetScriptResult(10000000); }
+		case(EV_GAIN_SPELL){ AddScore(ObjEnemyBossScene_GetInfo(objScene, INFO_SPELL_SCORE)); }
+}
+
+@Initialize{
+
+	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+	ObjEnemy_Regist(objEnemy);
+	Invuln(objEnemy, 450, shotDamageRate, bombDamageRate);
+	PlayEnemyHitSound(objEnemy, 1);
+	
+	let Cole = GetCurrentScriptDirectory~"sprites/Cole_Sheet.png";
+	ObjPrim_SetTexture(objEnemy, Cole); 
+	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 128, 128);
+	ascent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 128*x, 128, 128*x+128);}
+	descent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 128*x, 128, 128*x+128);}
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_RIGHT, 128, 128*x, 128*2, 128*x+128);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 128, 128*3, 128*2, 128*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 128, 128*2, 128*2, 128*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 128, 128*1, 128*2, 128*2);
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_LEFT, 128*2, 128*x, 128*3, 128*x+128);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 128*2, 128*3, 128*3, 128*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 128*2, 128*2, 128*3, 128*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 128*2, 128*1, 128*3, 128*2);
+	ascent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACK, 128*4, 128*x, 128*5, 128*x+128);}
+	descent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACKEND, 128*4, 128*x, 128*5, 128*x+128);}
+
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_IDLE, 8);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_LEFT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_RIGHT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_ATTACK, 5);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_RIGHT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_LEFT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_ATTACK, 2);
+	ObjAnim_StartAnimationA2(objEnemy, 0, 0);
+	ObjSprite2D_SetDestCenter(objEnemy); 
+	ObjRender_SetScaleXYZ(objEnemy, 0.75, 0.75, 1);
+	
+	SetAutoDeleteObject(true);
+	delayedstart;
+	End;
+}
+
+task End {
+	let itemx = 0;
+	let itemy = 0;
+	while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	
+	BossExplosion(objEnemy, 1, GetOwnScriptID);
+}
+
+task delayedstart{
+	
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX, 120, 60);
+	wait(120);
+	
+	ObjEnemyBossScene_StartSpell(objScene);
+	ObjEnemyBossScene_SetSpellTimer(objScene, 60*(124));
+	PlaySoundEffect("cardcall", 90, GetCenterX);
+	
+	let cole_cut = GetCurrentScriptDirectory~"sprites/Cole_Cutin.png";
+	ObjCutin_SetSpellcardS4("&quot;Notion Rain&quot;", cole_cut, "NAZRIN", "45", "65", "90");
+	ObjCutin_LaunchS3("NAZRIN", "0", "Hard");
+	NotifyEventAll(EV_SPELLBG, 1);
+	
+	wait(60);
+	attack1;
+	ManagePhase;
+	SetShotAutoDeleteClip(32, 40, 32, 16);
+	SetCommonData("pausebeforebonus", true);
+}
+
+task attack1{
+	let x = 0;
+	let repeats = 8;
+	let offset = 140;
+	let one = 1;
+	let count = 0;
+	let rainAmount = 1;
+	let startPoint = [-20, 404];
+	/*
+	TCharge01(GetEnemyX, GetEnemyY, 3, 105, 0, 0, 139, BLEND_ADD_ARGB, 25);
+	//ObjAnim_SetAttackA1(objEnemy, true);
+	PlaySoundEffect("charge", 100, GetEnemyX);
+	wait(105-60);
+	*/
+	frameManager;
+	loop{
+		ascent(i in -(rainAmount-1)..rainAmount){
+			let obj = CreateDNHShotA2(GetCenterX+(offset*i)+x, 0, 0.5, 90, 0.01, 3, [SHOT_DROP_DBLUE, SHOT_DROP_DPURPLE][color%2], 10);
+			Obj_SetRenderPriorityI(obj, Obj_GetRenderPriorityI(obj)+1);
+			let obj2 = CreateDNHShotA2(GetCenterX+(offset*i)-x, 0, 0.5, 90, 0.01, 3, [SHOT_DROP_DBLUE, SHOT_DROP_DPURPLE][color%2], 10);
+			Obj_SetRenderPriorityI(obj2, Obj_GetRenderPriorityI(obj)+1);
+		}
+		color++;
+		if(rainAmount<4){ rainAmount++; }
+		if(color>4){ 
+			x+=(140/4*1.044117647058824);
+			x = x%140;
+		}
+		wait(15);
+		
+	}	
+}
+
+task attack2{
+
+	TCharge01(GetEnemyX, GetEnemyY, 3, 45, 136, 191, 198, BLEND_ADD_ARGB, 25);
+	//ObjAnim_SetAttackA1(objEnemy, true);
+	PlaySoundEffect("charge2", 100, GetEnemyX);
+	wait(45);
+	
+	targetFrame = globalFrame;
+	CreateSanko(GetCenterX+96, 90);
+	
+}
+
+task CreateSanko(targetX, targetY) {
+
+	let objEnemy2 = ObjEnemy_Create(OBJ_ENEMY);
+	let x = 0;
+	let y = 0;
+	let GetX = 0;
+	let GetY = 0;
+	let angle = 0;
+	let switchDir = 1;
+	
+	ObjEnemy_SetLife(objEnemy2, 999999);
+	ObjEnemy_SetDamageRate(objEnemy2,100,100);
+	Invuln(objEnemy2, 0, 100, 100);
+	ObjEnemy_Regist(objEnemy2);
+	ObjMove_SetPosition(objEnemy2, targetX, targetY);
+	PlaySoundEffect("fam", 90, ObjMove_GetX(objEnemy2));
+	animateSanko(objEnemy2);
+	//EnemyCollision(objEnemy,12,4);
+	Const;
+	Movement;
+	Fire;
+	End;
+
+	task Const {
+		while(!Obj_IsDeleted(objEnemy2)) {
+			GetX = ObjMove_GetX(objEnemy2);
+			GetY = ObjMove_GetY(objEnemy2);
+			yield;
+		}
+	}
+	
+	task Movement {
+		/*
+		ObjMove_SetDestAtWeight(objEnemy,GetX,GetY+150,5,4);
+		wait(60);
+		if(ObjMove_GetX(objEnemy)>GetCenterX){ ObjMove_SetAngle(objEnemy, 180); }
+		else if(ObjMove_GetX(objEnemy)<GetCenterX){ ObjMove_SetAngle(objEnemy, 0); }
+		else{ ObjMove_SetAngle(objEnemy, 270); }
+		
+		//ObjMove_SetAcceleration(objEnemy, 2/120);
+		//ObjMove_SetMaxSpeed(objEnemy, 2);
+		*/
+	}
+	
+	task Fire {
+		globalFrame = 180;
+		loop{
+			if(globalFrame%240 == 0){
+				loop(8){
+					PlaySoundEffect("shot3", 90, GetX);
+					loop(4){
+						CreateDNHShotA2(GetX, GetY, 4, angle, -0.04, 1.75, SHOT_BALL_AURA_ORANGE, 10);
+						CreateShotA2(GetX, GetY, 4, angle+45, -0.04, 1.75, SHOT_BALL_AURA_ORANGE, 10);
+						//CreateDNHShotA2(GetX, GetY, 4, angle+90, -0.025, 2.5, SHOT_BALL_AURA_ORANGE, 20);
+						CreateShotA2(GetX, GetY, 4, -angle, -0.04, 1.75, SHOT_BALL_AURA_ORANGE, 10);
+						CreateShotA2(GetX, GetY, 4, -angle+45, -0.04, 1.75, SHOT_BALL_AURA_ORANGE, 10);
+						//CreateShotA2(GetX, GetY, 4, -angle+90, -0.025, 2.5, SHOT_BALL_AURA_ORANGE, 20);
+						angle+=360/4;
+					}
+					angle+=360/4/16;
+					wait(15);
+				}
+				ExMove(objEnemy2, targetX, rand(10, 15), targetY+rand(-5, 5), 20, 3, 15);
+			}
+			else{ yield; }
+		}
+	}
+
+	task End {
+		while(!Obj_IsDeleted(objEnemy2)){ yield; }
+		Obj_Delete(objEnemy2);
+	}
+}
+
+task animateSanko(objEnemy2){
+	let Sanko = GetCurrentScriptDirectory~"sprites/sanko.png";
+	ObjPrim_SetTexture(objEnemy2, Sanko); 
+	let ScaleY = 2;
+	let ScaleX = 0;
+	//ObjRender_SetColor(objEnemy2, 131, 191, 198);
+	ObjSprite2D_SetSourceRect(objEnemy2, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(objEnemy2);
+	loop(30){
+		ScaleY-=1.5/30;
+		ScaleX+=0.5/30;
+		ObjRender_SetScaleXYZ(objEnemy2, ScaleX, ScaleY, 1);
+		yield;
+	}
+}
+
+task attack3{
+
+	TCharge01(GetEnemyX, GetEnemyY, 3, 45, 119, 81, 36, BLEND_ADD_ARGB, 25);
+	//ObjAnim_SetAttackA1(objEnemy, true);
+	PlaySoundEffect("charge2", 100, GetEnemyX);
+	wait(45);
+	CreateSandra(GetCenterX-96, 90);
+
+}
+
+task CreateSandra(targetX, targetY) {
+
+	let objEnemy2 = ObjEnemy_Create(OBJ_ENEMY);
+	let x = 0;
+	let y = 0;
+	let GetX = 0;
+	let GetY = 0;
+	let angle = 0;
+	let switchDir = 1;
+	
+	ObjEnemy_SetLife(objEnemy2, 999999);
+	ObjEnemy_SetDamageRate(objEnemy2,100,100);
+	Invuln(objEnemy2, 0, 100, 100);
+	ObjEnemy_Regist(objEnemy2);
+	ObjMove_SetPosition(objEnemy2, targetX, targetY);
+	PlaySoundEffect("fam", 90, ObjMove_GetX(objEnemy2));
+	animateSandra(objEnemy2);
+	//EnemyCollision(objEnemy,12,4);
+	Const;
+	Movement;
+	Fire;
+	End;
+
+	task Const {
+		while(!Obj_IsDeleted(objEnemy2)) {
+			GetX = ObjMove_GetX(objEnemy2);
+			GetY = ObjMove_GetY(objEnemy2);
+			yield;
+		}
+	}
+	
+	task Movement {
+		/*
+		ObjMove_SetDestAtWeight(objEnemy,GetX,GetY+150,5,4);
+		wait(60);
+		if(ObjMove_GetX(objEnemy)>GetCenterX){ ObjMove_SetAngle(objEnemy, 180); }
+		else if(ObjMove_GetX(objEnemy)<GetCenterX){ ObjMove_SetAngle(objEnemy, 0); }
+		else{ ObjMove_SetAngle(objEnemy, 270); }
+		
+		//ObjMove_SetAcceleration(objEnemy, 2/120);
+		//ObjMove_SetMaxSpeed(objEnemy, 2);
+		*/
+	}
+	
+	task Fire {
+		let arrowoffset = 5.14;
+		loop{
+			if(globalFrame%240 == 120){
+				loop(8){
+					PlaySoundEffect("shot5", 90, GetX);
+					loop(3){
+						ascent(i in -3..4){
+							CreateDNHShotA1(GetX, GetY, 2.2-(absolute(i)*0.22), angle+(i*arrowoffset), SHOT_SCALE_DORANGE, 10);
+							angle+=360/3;
+						}
+					}
+					angle-=360/3/3;
+					wait(15);
+				}
+				ExMove(objEnemy2, targetX, rand(10, 15), targetY+rand(-5, 5), 20, 3, 15);
+				angle-=360/3/3/3;
+			}
+			else{ yield; }
+		}
+	}
+
+	task End {
+		while(!Obj_IsDeleted(objEnemy2)){ yield; }
+		Obj_Delete(objEnemy2);
+	}
+}
+
+task animateSandra(objEnemy2){
+	let Sandra = GetCurrentScriptDirectory~"sprites/sandra.png";
+	ObjPrim_SetTexture(objEnemy2, Sandra); 
+	let ScaleY = 2;
+	let ScaleX = 0;
+	//ObjRender_SetColor(objEnemy2, 131, 191, 198);
+	ObjSprite2D_SetSourceRect(objEnemy2, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(objEnemy2);
+	loop(30){
+		ScaleY-=1.5/30;
+		ScaleX+=0.5/30;
+		ObjRender_SetScaleXYZ(objEnemy2, ScaleX, ScaleY, 1);
+		yield;
+	}
+}
+
+task attack4{
+
+	TCharge01(GetEnemyX, GetEnemyY, 3, 45, 249, 207, 95, BLEND_ADD_ARGB, 25);
+	//ObjAnim_SetAttackA1(objEnemy, true);
+	PlaySoundEffect("charge2", 100, GetEnemyX);
+	wait(45);
+	CreateGabby(GetCenterX+144, 150);
+
+}
+
+task CreateGabby(targetX, targetY) {
+
+	let objEnemy2 = ObjEnemy_Create(OBJ_ENEMY);
+	let x = 0;
+	let y = 0;
+	let GetX = 0;
+	let GetY = 0;
+	let angle = 0;
+	let switchDir = 1;
+	
+	ObjEnemy_SetLife(objEnemy2, 999999);
+	ObjEnemy_SetDamageRate(objEnemy2,100,100);
+	Invuln(objEnemy2, 0, 100, 100);
+	ObjEnemy_Regist(objEnemy2);
+	ObjMove_SetPosition(objEnemy2, targetX, targetY);
+	PlaySoundEffect("fam", 90, ObjMove_GetX(objEnemy2));
+	animateGabby(objEnemy2);
+	//EnemyCollision(objEnemy,12,4);
+	Const;
+	Movement;
+	Fire;
+	End;
+
+	task Const {
+		while(!Obj_IsDeleted(objEnemy2)) {
+			GetX = ObjMove_GetX(objEnemy2);
+			GetY = ObjMove_GetY(objEnemy2);
+			yield;
+		}
+	}
+	
+	task Movement {
+		/*
+		ObjMove_SetDestAtWeight(objEnemy,GetX,GetY+150,5,4);
+		wait(60);
+		if(ObjMove_GetX(objEnemy)>GetCenterX){ ObjMove_SetAngle(objEnemy, 180); }
+		else if(ObjMove_GetX(objEnemy)<GetCenterX){ ObjMove_SetAngle(objEnemy, 0); }
+		else{ ObjMove_SetAngle(objEnemy, 270); }
+		
+		//ObjMove_SetAcceleration(objEnemy, 2/120);
+		//ObjMove_SetMaxSpeed(objEnemy, 2);
+		*/
+	}
+	
+	task Fire {
+		let arrowoffset = 5.14;
+		loop{
+			if(globalFrame%240 == 0){
+				loop(8){
+					PlaySoundEffect("shot", 90, GetX);
+					loop(14){
+							CreateDNHShotA1(GetX, GetY, 2.1, angle, SHOT_DIAMOND_DYELLOW, 10);
+							angle+=360/14;
+						}
+					angle+=360/14/3.05;
+					wait(15);
+				}
+				ExMove(objEnemy2, targetX, rand(10, 15), targetY+rand(-5, 5), 20, 3, 15);
+				angle+=360/14/3.05/2;
+			}
+			else{ yield; }
+		}
+	}
+
+	task End {
+		while(!Obj_IsDeleted(objEnemy2)){ yield; }
+		Obj_Delete(objEnemy2);
+	}
+}
+
+task attack5{
+
+	TCharge01(GetEnemyX, GetEnemyY, 3, 45, 80, 200, 120, BLEND_ADD_ARGB, 25);
+	//ObjAnim_SetAttackA1(objEnemy, true);
+	PlaySoundEffect("charge2", 100, GetEnemyX);
+	wait(45);
+	
+	CreateTakashi(GetCenterX-144, 150);
+	
+}
+
+task CreateTakashi(targetX, targetY) {
+
+	let objEnemy2 = ObjEnemy_Create(OBJ_ENEMY);
+	let x = 0;
+	let y = 0;
+	let GetX = 0;
+	let GetY = 0;
+	let angle = 0;
+	let switchDir = 1;
+	
+	ObjEnemy_SetLife(objEnemy2, 999999);
+	ObjEnemy_SetDamageRate(objEnemy2,100,100);
+	Invuln(objEnemy2, 0, 100, 100);
+	ObjEnemy_Regist(objEnemy2);
+	ObjMove_SetPosition(objEnemy2, targetX, targetY);
+	PlaySoundEffect("fam", 90, ObjMove_GetX(objEnemy2));
+	animateTakashi(objEnemy2);
+	//EnemyCollision(objEnemy,12,4);
+	Const;
+	Movement;
+	Fire;
+	End;
+
+	task Const {
+		while(!Obj_IsDeleted(objEnemy2)) {
+			GetX = ObjMove_GetX(objEnemy2);
+			GetY = ObjMove_GetY(objEnemy2);
+			yield;
+		}
+	}
+	
+	task Movement {
+		/*
+		ObjMove_SetDestAtWeight(objEnemy,GetX,GetY+150,5,4);
+		wait(60);
+		if(ObjMove_GetX(objEnemy)>GetCenterX){ ObjMove_SetAngle(objEnemy, 180); }
+		else if(ObjMove_GetX(objEnemy)<GetCenterX){ ObjMove_SetAngle(objEnemy, 0); }
+		else{ ObjMove_SetAngle(objEnemy, 270); }
+		
+		//ObjMove_SetAcceleration(objEnemy, 2/120);
+		//ObjMove_SetMaxSpeed(objEnemy, 2);
+		*/
+	}
+	
+	task Fire {
+		loop{
+			if(globalFrame%240 == 120){
+				loop(8){
+					PlaySoundEffect("shot", 90, GetX);
+					loop(14){
+							CreateDNHShotA1(GetX, GetY, 2.1, angle, SHOT_BILL_DGREEN, 10);
+							angle+=360/14;
+						}
+					angle-=360/14/3.05;
+					wait(15);
+				}
+				ExMove(objEnemy2, targetX, rand(10, 15), targetY+rand(-5, 5), 20, 3, 15);
+				angle-=360/14/3.05/2;
+			}
+			else{ yield; }
+		}
+	}
+
+	task End {
+		while(!Obj_IsDeleted(objEnemy2)){ yield; }
+		Obj_Delete(objEnemy2);
+	}
+}
+
+task animateTakashi(objEnemy2){
+	let Takashi = GetCurrentScriptDirectory~"sprites/takashi.png";
+	ObjPrim_SetTexture(objEnemy2, Takashi); 
+	let ScaleY = 2;
+	let ScaleX = 0;
+	//ObjRender_SetColor(objEnemy2, 131, 191, 198);
+	ObjSprite2D_SetSourceRect(objEnemy2, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(objEnemy2);
+	loop(30){
+		ScaleY-=1.5/30;
+		ScaleX+=0.5/30;
+		ObjRender_SetScaleXYZ(objEnemy2, ScaleX, ScaleY, 1);
+		yield;
+	}
+}
+
+
+
+task animateGabby(objEnemy2){
+	let Gabby = GetCurrentScriptDirectory~"sprites/gabby.png";
+	ObjPrim_SetTexture(objEnemy2, Gabby); 
+	let ScaleY = 2;
+	let ScaleX = 0;
+	//ObjRender_SetColor(objEnemy2, 131, 191, 198);
+	ObjSprite2D_SetSourceRect(objEnemy2, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(objEnemy2);
+	loop(30){
+		ScaleY-=1.5/30;
+		ScaleX+=0.5/30;
+		ObjRender_SetScaleXYZ(objEnemy2, ScaleX, ScaleY, 1);
+		yield;
+	}
+}
+
+
+task frameManager{
+	loop{
+		globalFrame++;
+		globalFrame = globalFrame%240;
+		yield;
+	}
+}
+
+task ManagePhase{
+	wait(240);
+	loop{
+		if(ObjEnemy_GetInfo(objEnemy, INFO_LIFE)<=1000 && phase == 0){
+			Invuln(objEnemy, 180, shotDamageRate, bombDamageRate);
+			phase = 1;
+			attack2;
+		}
+		if((ObjEnemy_GetInfo(objEnemy, INFO_LIFE)<=800 || GetTimer<=(90*60)) && phase == 1){
+			Invuln(objEnemy, 180, shotDamageRate, bombDamageRate);
+			phase = 2;
+			attack3;
+		}
+		if((ObjEnemy_GetInfo(objEnemy, INFO_LIFE)<=600 || GetTimer<=(60*60)) && phase == 2){
+			Invuln(objEnemy, 180, shotDamageRate, bombDamageRate);
+			phase = 3;
+			attack4;
+		}
+		if((ObjEnemy_GetInfo(objEnemy, INFO_LIFE)<=400 || GetTimer<=(30*60)) && phase == 3){
+			Invuln(objEnemy, 0, shotDamageRate*1.25, bombDamageRate);
+			phase = 4;
+			attack5;
+		}
+		yield;
+	}
+}

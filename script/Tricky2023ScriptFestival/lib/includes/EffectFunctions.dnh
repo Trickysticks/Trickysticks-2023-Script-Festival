@@ -1,0 +1,62 @@
+#include "../../tricky_system/Event_Const.dnh"
+
+function ConcentrationB1(x,y,duration,num,angle,rot,speed,layer,color) { //"Dark" concentration effect modelled from Double Dealing Character (adapted from Mystical Power Plant)
+	NotifyEventAll(EV_EFFECT,[[8.1],[x],[y],[duration],[num],[angle],[rot],[speed],[layer],color]);
+}
+
+function AlertZone01(num,x,y,dir,frames) { //Sora styled "CAUTION" warning field
+	NotifyEventAll(EV_EFFECT,[[9.1],[num],[x],[y],[dir],[frames]]); // num must be either 2,3,4, or 5
+}
+
+function AlertZone02(num,x,y,frames) { //Sora styled "CAUTION" warning field
+	NotifyEventAll(EV_EFFECT,[[9.2],[num],[x],[y],[frames]]);
+}
+
+function TCharge01(x,y,size,frame,r,g,b,blend,priority){ // Draw a charge circle that has an acceleration on shrinking
+	NotifyEventAll(EV_EFFECT, [[69.1], [x], [y], [size], [frame], [r], [g], [b], [blend], [priority]]);
+}
+
+function TExpan(px,py,maxv,t,r,g,b,alpha){
+	NotifyEventAll(EV_EFFECT, [[69.2], [px], [py], [maxv], [t], [r], [g], [b], [alpha]]);
+	}
+	
+function HiroyukiCutin{
+	NotifyEventAll(EV_EFFECT, [[80.0]]);
+}
+
+function RedrinCutin{
+	NotifyEventAll(EV_EFFECT, [[80.1]]);
+}
+	
+function ScreenShake(shaketime, intensity){
+	NotifyEventAll(EV_EFFECT, [[99.1], [shaketime], [intensity]]);
+}
+
+function BossExplosion(objEnemy, spellbg, scriptid){
+	NotifyEventAll(EV_EFFECT, [[99.9], [objEnemy], [spellbg], [scriptid]]);
+}
+
+function BossExplosionTricky(objEnemy, spellbg, scriptid){
+	NotifyEventAll(EV_EFFECT, [[99.99], [objEnemy], [spellbg], [scriptid]]);
+}
+
+function BossExplosionQuick(objEnemy, spellbg, scriptid){
+	NotifyEventAll(EV_EFFECT, [[99.8], [objEnemy], [spellbg], [scriptid]]);
+}
+
+function BossExplosionNoDel(objEnemy, spellbg, scriptid){
+	NotifyEventAll(EV_EFFECT, [[99.85], [objEnemy], [spellbg], [scriptid]]);
+}
+
+function BossShadow{
+	NotifyEventAll(EV_EFFECT, [[100.1]]);
+}
+
+function BossCircle{
+	NotifyEventAll(EV_EFFECT, [[100.0]]);
+}
+
+function CreateDelayCloud (obj,v,angle,vAcc,vF,graphic,delay){
+	NotifyEventAll(EV_EFFECT, [[0.1], [obj], [v], [angle], [vAcc], [vF], [graphic], [delay]]);
+}
+

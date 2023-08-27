@@ -1,0 +1,1164 @@
+//Graphical Effect Script
+
+let CSD = GetCurrentScriptDirectory;
+let MD = GetModuleDirectory;
+
+#include"./Event_Const.dnh"
+#include"../lib/includes/Function_Audio.dnh"
+#include"../lib/includes/ItemFunctions.dnh"
+
+@MainLoop { yield; }
+
+@Event {
+	alternative(GetEventType)
+	case(EV_EFFECT) {
+		let eventParam = GetEventArgument(0);
+		let type = eventParam[0][0];
+		alternative(type)
+			case(0.1){ CreateDelayCloud(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0],eventParam[5][0],eventParam[6][0],eventParam[7][0]); }
+			case(8.1) { ConcentrationB1(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0],eventParam[5][0],eventParam[6][0],eventParam[7][0],eventParam[8][0],eventParam[9]); }
+			case(9.1) { AlertZone01(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0],eventParam[5][0]); }
+			case(9.2) { AlertZone02(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0]); }
+			case(69.1) { TCharge01(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0],eventParam[5][0],eventParam[6][0],eventParam[7][0],eventParam[8][0],eventParam[9][0]); }
+			case(69.2) { TExpan(eventParam[1][0],eventParam[2][0],eventParam[3][0],eventParam[4][0],eventParam[5][0],eventParam[6][0],eventParam[7][0],eventParam[8][0]); }
+			case(80.0){ HiroyukiCutin; }
+			case(80.1){ RedrinCutin; }
+			case(99.1) { ScreenShake(eventParam[1][0],eventParam[2][0]); }
+			case(99.8) { BossExplosionQuick(eventParam[1][0],eventParam[2][0],eventParam[3][0]); }
+			case(99.85) { BossExplosionNoDel(eventParam[1][0],eventParam[2][0],eventParam[3][0]); }
+			case(99.9) { BossExplosion(eventParam[1][0],eventParam[2][0],eventParam[3][0]); }
+			case(99.99) { BossExplosionTricky(eventParam[1][0],eventParam[2][0],eventParam[3][0]); }
+			case(100.0){ BossCircle; }
+			case(100.1){ BossShadow; }
+	}
+}
+
+function randEff ( let min, let max ) {
+    let temp = GetCommonData("randEff", 1);
+    temp = (temp*214013+2531011)%4294967296;
+    SetCommonData("randEff", temp);
+    if (max==min) { return min; }
+    else { return min+trunc(temp/256)/16777216*(max-min); }
+}
+
+task BossCircle(){
+	let spin = 0;
+	let size = 0.7;
+	let size2 = 0;
+	let s = 0;
+	let alpha = 0;
+	let objEnemy = ID_INVALID;
+	let objScene = GetEnemyBossSceneObjectID;
+	
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, CSD ~ "img/MG.png");
+	
+	ObjSprite2D_SetSourceRect(obj,0,0,256,256);
+	ObjSprite2D_SetDestCenter(obj);
+	Obj_SetRenderPriorityI(obj, 28);
+	ObjRender_SetBlendType(obj,BLEND_ADD_RGB);
+	
+	while(!Obj_IsDeleted(objScene)) {
+		if(length(GetEnemyBossObjectID)>0) { objEnemy = GetEnemyBossObjectID[0]; }
+		//if(ObjMove_GetX(objEnemy)>0 && ObjMove_GetX(objEnemy)<GetStgFrameWidth){
+		if(ObjMove_GetX(objEnemy)!=0){
+			ObjRender_SetPosition(obj,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy), 0);
+		}
+		if(GetCommonData("timestop", false)==false){
+			spin += 2;
+		}
+		if(size2<size){ size2+=0.02; }
+		if(alpha<192){ alpha++; }
+		ObjRender_SetAlpha(obj, alpha); 
+		ObjRender_SetAngleXYZ(obj,0,0,spin*2);
+		ObjRender_SetColor(obj,1*(192+42*sin(spin+180)),1*(192+42*sin(spin)),0);
+		ObjRender_SetScaleXYZ(obj,size2*1.1+0.1*sin(spin),size2*1.1+0.1*sin(spin),0);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+	
+	
+task BossShadow(){
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, CSD ~ "img/shadow.png");
+	WriteLog(CSD ~ "img/shadow.png");
+	Obj_SetRenderPriorityI(obj, 1);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 64, 16);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetY(obj, GetStgFrameHeight+24);
+	
+	let objEnemy = ID_INVALID;
+	let objScene = GetEnemyBossSceneObjectID;
+	let alpha = 0;
+	
+	while(!Obj_IsDeleted(objScene)) {
+		
+		if(length(GetEnemyBossObjectID)>0) { objEnemy = GetEnemyBossObjectID[0]; }
+		if(ObjMove_GetX(objEnemy)!=0 && ObjMove_GetX(objEnemy)<GetStgFrameWidth+GetStgFrameLeft){
+			ObjRender_SetX(obj,ObjMove_GetX(objEnemy)+GetStgFrameLeft);
+		}
+		else if(ObjRender_GetX(objEnemy)!=0) { ObjRender_SetX(obj,-500); }
+		ObjRender_SetAlpha(obj, alpha);
+		if(alpha<255) { alpha+=255/30; }
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task BossExplosion(objEnemy, spellbg, scriptid){
+	StartSlow(TARGET_ALL, 30);
+	PlaySoundEffect("se_enep01", 100, ObjMove_GetX(objEnemy));
+	loop(15){ TExpan(ObjMove_GetX(objEnemy)+rand(-25, 25), ObjMove_GetY(objEnemy)+rand(-25, 25), 8, 25, 255, 255, 255, 100); wait(5); }
+	PlaySoundEffect("se_enep01", 100, ObjMove_GetX(objEnemy));
+	ScreenShake(60, 15);
+	TExpan(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 55, 120, 224, 255, 255, 255);
+	NotifyEventAll(EV_SPELLBGEND, spellbg);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	CreateItems02(24, ITEM_POINT_S, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, -50, 40, 40, 10000);
+	Obj_Delete(objEnemy);
+	CloseScript(scriptid);
+	wait(60);
+	SetCommonData("pausebeforebonus", false);
+	StopSlow(TARGET_ALL);
+	SetShotAutoDeleteClip(64, 64, 64, 64);
+}
+
+task BossExplosionTricky(objEnemy, spellbg, scriptid){
+	let angle = 0;
+	StartSlow(TARGET_ALL, 30);
+	PlaySoundEffect("se_enep01", 100, ObjMove_GetX(objEnemy));
+	loop(15){ TExpan(ObjMove_GetX(objEnemy)+rand(-25, 25), ObjMove_GetY(objEnemy)+rand(-25, 25), 8, 25, 255, 255, 255, 100); wait(5); }
+	PlaySoundEffect("se_enep01", 100, ObjMove_GetX(objEnemy));
+	ScreenShake(60, 15);
+	TExpan(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 55, 120, 224, 255, 255, 255);
+	NotifyEventAll(EV_SPELLBGEND, spellbg);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	loop(6){
+		CreateItems02(1, ITEM_1UP, ObjMove_GetX(objEnemy)+50*cos(angle), ObjMove_GetY(objEnemy)+50*sin(angle), 0, -50, 0, 0, 10000);
+		angle+=360/6;
+	}
+	Obj_Delete(objEnemy);
+	CloseScript(scriptid);
+	wait(60);
+	SetCommonData("pausebeforebonus", false);
+	StopSlow(TARGET_ALL);
+	SetShotAutoDeleteClip(64, 64, 64, 64);
+}
+
+task BossExplosionQuick(objEnemy, spellbg, scriptid){
+	PlaySoundEffect("se_enep01", 100, ObjMove_GetX(objEnemy));
+	ScreenShake(60, 15);
+	TExpan(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 55, 120, 224, 255, 255, 255);
+	NotifyEventAll(EV_SPELLBGEND, spellbg);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	let angle = 0;
+	loop(30){
+		CreateItems02(1, ITEM_POINT_S, ObjMove_GetX(objEnemy)+40*cos(angle), ObjMove_GetY(objEnemy)+40*sin(angle), 0, -50, 0, 0, 10000);
+		angle+=360/30;
+	}
+	CreateItems02(1, ITEM_1UP, ObjMove_GetX(objEnemy)+20, ObjMove_GetY(objEnemy), 0, -50, 0, 0, 69);
+	CreateItems02(1, ITEM_SPELL, ObjMove_GetX(objEnemy)-20, ObjMove_GetY(objEnemy), 0, -50, 0, 0, 69);
+	Obj_Delete(objEnemy);
+	CloseScript(scriptid);
+	wait(60);
+}
+
+task BossExplosionNoDel(objEnemy, spellbg, scriptid){
+	PlaySoundEffect("se_enep01", 100, ObjMove_GetX(objEnemy));
+	ScreenShake(60, 15);
+	TExpan(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 55, 120, 224, 255, 255, 255);
+	/*
+	NotifyEventAll(EV_SPELLBGEND, spellbg);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	let angle = 0;
+	loop(30){
+		CreateItems02(1, ITEM_POINT_S, ObjMove_GetX(objEnemy)+40*cos(angle), ObjMove_GetY(objEnemy)+40*sin(angle), 0, -50, 0, 0, 10000);
+		angle+=360/30;
+	}
+	CreateItems02(1, ITEM_1UP, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, -50, 0, 0, 69);
+	Obj_Delete(objEnemy);
+	CloseScript(scriptid);*/
+	wait(60);
+}
+
+task HiroyukiCutin{
+
+	let t = 0;
+	
+	let minYSpeed = 0.4;
+	let maxYSpeed = 5;
+	let accelerationTime = 5;
+
+	let shurikenXOffset = -40;
+	let shurikenYOffset = -120;
+	let shurikenAngle = 0;
+	let shurikenRotateRate = (360/145)*3;
+	
+	let mainX = (384/2);
+	let mainY = (448/2)-125;
+	let mainAlpha = 0;
+	let mainYSpeed = 5;
+	
+	let fadeInAfterimageDuration = 15;
+	let fadeOutAfterimageDuration = 15;
+	
+	let cutinGraphics = [];
+	
+	let path1 = GetCurrentScriptDirectory~"../sprites/portraits/HiroCut1.png";
+	let objMain = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objMain, path1);
+	ObjRender_SetBlendType(objMain, BLEND_ALPHA);
+	Obj_SetRenderPriority(objMain, 0.49);
+	ObjSprite2D_SetSourceRect(objMain, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objMain);
+	ObjRender_SetPosition(objMain, mainX, mainY, 0);
+	ObjRender_SetScaleX(objMain, 1);
+	ObjRender_SetScaleY(objMain, 1);
+	ObjRender_SetAlpha(objMain, 0);
+	cutinGraphics ~= [objMain];
+	
+	let path2_1 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai1.png";
+	let objLeftKunai_1 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objLeftKunai_1, path2_1);
+	ObjRender_SetBlendType(objLeftKunai_1, BLEND_ALPHA);
+	Obj_SetRenderPriority(objLeftKunai_1, 0.50);
+	ObjSprite2D_SetSourceRect(objLeftKunai_1, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objLeftKunai_1);
+	ObjRender_SetPosition(objLeftKunai_1, mainX, mainY, 0);
+	ObjRender_SetScaleX(objLeftKunai_1, 0);
+	ObjRender_SetScaleY(objLeftKunai_1, 0);
+	ObjRender_SetAlpha(objLeftKunai_1, 0);
+	cutinGraphics ~= [objLeftKunai_1];
+	
+	let path2_2 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai2.png";
+	let objLeftKunai_2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objLeftKunai_2, path2_2);
+	ObjRender_SetBlendType(objLeftKunai_2, BLEND_ALPHA);
+	Obj_SetRenderPriority(objLeftKunai_2, 0.50);
+	ObjSprite2D_SetSourceRect(objLeftKunai_2, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objLeftKunai_2);
+	ObjRender_SetPosition(objLeftKunai_2, mainX, mainY, 0);
+	ObjRender_SetScaleX(objLeftKunai_2, 0);
+	ObjRender_SetScaleY(objLeftKunai_2, 0);
+	ObjRender_SetAlpha(objLeftKunai_2, 0);
+	cutinGraphics ~= [objLeftKunai_2];
+	
+	let path2_3 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai3.png";
+	let objLeftKunai_3 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objLeftKunai_3, path2_3);
+	ObjRender_SetBlendType(objLeftKunai_3, BLEND_ALPHA);
+	Obj_SetRenderPriority(objLeftKunai_3, 0.50);
+	ObjSprite2D_SetSourceRect(objLeftKunai_3, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objLeftKunai_3);
+	ObjRender_SetPosition(objLeftKunai_3, mainX, mainY, 0);
+	ObjRender_SetScaleX(objLeftKunai_3, 0);
+	ObjRender_SetScaleY(objLeftKunai_3, 0);
+	ObjRender_SetAlpha(objLeftKunai_3, 0);
+	cutinGraphics ~= [objLeftKunai_3];
+	
+	let path2_4 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai4.png";
+	let objLeftKunai_4 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objLeftKunai_4, path2_4);
+	ObjRender_SetBlendType(objLeftKunai_4, BLEND_ALPHA);
+	Obj_SetRenderPriority(objLeftKunai_4, 0.50);
+	ObjSprite2D_SetSourceRect(objLeftKunai_4, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objLeftKunai_4);
+	ObjRender_SetPosition(objLeftKunai_4, mainX, mainY, 0);
+	ObjRender_SetScaleX(objLeftKunai_4, 0);
+	ObjRender_SetScaleY(objLeftKunai_4, 0);
+	ObjRender_SetAlpha(objLeftKunai_4, 0);
+	cutinGraphics ~= [objLeftKunai_4];
+	
+	let path3_1 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai5.png";
+	let objRightKunai_1 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objRightKunai_1, path3_1);
+	ObjRender_SetBlendType(objRightKunai_1, BLEND_ALPHA);
+	Obj_SetRenderPriority(objRightKunai_1, 0.48);
+	ObjSprite2D_SetSourceRect(objRightKunai_1, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objRightKunai_1);
+	ObjRender_SetPosition(objRightKunai_1, mainX, mainY, 0);
+	ObjRender_SetScaleX(objRightKunai_1, 0);
+	ObjRender_SetScaleY(objRightKunai_1, 0);
+	ObjRender_SetAlpha(objRightKunai_1, 0);
+	cutinGraphics ~= [objRightKunai_1];
+	
+	let path3_2 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai6.png";
+	let objRightKunai_2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objRightKunai_2, path3_2);
+	ObjRender_SetBlendType(objRightKunai_2, BLEND_ALPHA);
+	Obj_SetRenderPriority(objRightKunai_2, 0.48);
+	ObjSprite2D_SetSourceRect(objRightKunai_2, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objRightKunai_2);
+	ObjRender_SetPosition(objRightKunai_2, mainX, mainY, 0);
+	ObjRender_SetScaleX(objRightKunai_2, 0);
+	ObjRender_SetScaleY(objRightKunai_2, 0);
+	ObjRender_SetAlpha(objRightKunai_2, 0);
+	cutinGraphics ~= [objRightKunai_2];
+	
+	let path3_3 = GetCurrentScriptDirectory~"../sprites/portraits/HiroKunai7.png";
+	let objRightKunai_3 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objRightKunai_3, path3_3);
+	ObjRender_SetBlendType(objRightKunai_3, BLEND_ALPHA);
+	Obj_SetRenderPriority(objRightKunai_3, 0.48);
+	ObjSprite2D_SetSourceRect(objRightKunai_3, 0, 0, 353, 512);
+	ObjSprite2D_SetDestCenter(objRightKunai_3);
+	ObjRender_SetPosition(objRightKunai_3, mainX, mainY, 0);
+	ObjRender_SetScaleX(objRightKunai_3, 0);
+	ObjRender_SetScaleY(objRightKunai_3, 0);
+	ObjRender_SetAlpha(objRightKunai_3, 0);
+	cutinGraphics ~= [objRightKunai_3];
+	
+	let path4 = GetCurrentScriptDirectory~"../sprites/portraits/HiroCutCentered.png";
+	let objShuriken = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objShuriken, path4);
+	ObjRender_SetBlendType(objShuriken, BLEND_ALPHA);
+	Obj_SetRenderPriority(objShuriken, 0.47);
+	ObjSprite2D_SetSourceRect(objShuriken, 0, 0, 192, 192);
+	ObjSprite2D_SetDestCenter(objShuriken);
+	ObjRender_SetPosition(objShuriken, mainX+shurikenXOffset, mainY+shurikenYOffset, 0);
+	ObjRender_SetScaleX(objShuriken, 1);
+	ObjRender_SetScaleY(objShuriken, 1);
+	ObjRender_SetAlpha(objShuriken, 0);
+	cutinGraphics ~= [objShuriken];
+	
+	let cutinGraphics2 = cutinGraphics[0..8];
+	
+	loop(145){
+		t++;
+		
+		if(t<=20 || t>=125){
+			if(t==125){ maxYSpeed = 6; }
+			if(mainYSpeed<maxYSpeed){ mainYSpeed+=(maxYSpeed-minYSpeed)/accelerationTime; }
+			if(mainYSpeed>maxYSpeed){ mainYSpeed = maxYSpeed; }
+		} else {
+			if(mainYSpeed>minYSpeed){ mainYSpeed-=(maxYSpeed-minYSpeed)/accelerationTime; }
+			if(mainYSpeed<minYSpeed){ mainYSpeed = minYSpeed; }
+		}
+		
+		if(t==40){
+			ManageKunaiGrowth(objLeftKunai_1);
+		}
+		if(t==45){
+			ManageKunaiGrowth(objLeftKunai_2);
+		}
+		if(t==50){
+			ManageKunaiGrowth(objLeftKunai_3);
+		}
+		if(t==55){
+			ManageKunaiGrowth(objLeftKunai_4);
+		}
+		if(t==60){
+			ManageKunaiGrowth(objRightKunai_1);
+		}
+		if(t==65){
+			ManageKunaiGrowth(objRightKunai_2);
+		}
+		if(t==70){
+			ManageKunaiGrowth(objRightKunai_3);
+		}
+		
+		if(t<=20){
+			mainAlpha+=255/20;
+		} 
+		
+		if(t>=125){
+			mainAlpha-=255/20;
+		}
+		
+		if(t<=20){ 
+			AuraGraphic(fadeInAfterimageDuration, path1, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.49); 
+			AuraGraphic(fadeInAfterimageDuration, path4, 0, 0, 192, 208, mainX+shurikenXOffset, mainY+shurikenYOffset, mainAlpha, 0.47); 
+		}
+		if(t>=125){ 
+			AuraGraphic(fadeOutAfterimageDuration, path1, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.49); 
+			AuraGraphic(fadeOutAfterimageDuration, path2_1, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.50); 
+			AuraGraphic(fadeOutAfterimageDuration, path2_2, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.50); 
+			AuraGraphic(fadeOutAfterimageDuration, path2_3, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.50); 
+			AuraGraphic(fadeOutAfterimageDuration, path2_4, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.50); 
+			AuraGraphic(fadeOutAfterimageDuration, path3_1, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.48);
+			AuraGraphic(fadeOutAfterimageDuration, path3_2, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.48); 
+			AuraGraphic(fadeOutAfterimageDuration, path3_3, 0, 0, 353, 512, mainX, mainY, mainAlpha, 0.48); 
+			AuraGraphic(fadeOutAfterimageDuration, path4, 0, 0, 192, 208, mainX+shurikenXOffset, mainY+shurikenYOffset, mainAlpha, 0.47, shurikenAngle); 
+		}
+
+		mainY+=mainYSpeed;
+		shurikenAngle+=shurikenRotateRate;
+		
+		ObjRender_SetPosition(objShuriken, mainX+shurikenXOffset, mainY+shurikenYOffset, 0);
+		ObjRender_SetAngleZ(objShuriken, shurikenAngle);
+		
+		for each(int i in cutinGraphics2){
+			ObjRender_SetPosition(i, mainX, mainY, 0);
+		}
+		
+		if(t<125){
+			ObjRender_SetAlpha(objMain, mainAlpha);
+			ObjRender_SetAlpha(objShuriken, mainAlpha);
+			
+		} else{
+			for each(int i in cutinGraphics){
+				ObjRender_SetAlpha(i, mainAlpha);
+			}
+		}
+	
+		yield;
+	}
+	
+	for each(int i in cutinGraphics){
+		Obj_Delete(i);
+	}
+	
+	task AuraGraphic(duration, graphic, left, top, right, bottom, x, y, startAlpha, initPriority){
+		let ALPHA = startAlpha;
+		let MOD = 0;
+		let rate = 2/90 + rand(0.0125, -0.0125);
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, graphic);
+		ObjSprite2D_SetSourceRect(obj, left, top, right, bottom);
+		ObjRender_SetScaleXYZ(obj, 1, 1, NULL);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAlpha(obj, ALPHA);
+		Obj_SetRenderPriority(obj, initPriority-0.01);
+	
+		ObjRender_SetPosition(obj, x, y, 0);
+	
+		loop(duration){
+			ALPHA-=startAlpha/duration;
+			ObjRender_SetAlpha(obj, ALPHA);
+			ObjRender_SetScaleXYZ(obj, 1+MOD, 1+MOD, NULL);
+			//MOD+=rate;
+			
+			if(ALPHA<=0){
+				Obj_Delete(obj);
+			}
+			yield;
+		}
+	}
+	task AuraGraphic(duration, graphic, left, top, right, bottom, x, y, startAlpha, initPriority, angle){
+		let ALPHA = startAlpha;
+		let MOD = 0;
+		let rate = 2/90 + rand(0.0125, -0.0125);
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, graphic);
+		ObjSprite2D_SetSourceRect(obj, left, top, right, bottom);
+		ObjRender_SetScaleXYZ(obj, 1, 1, NULL);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAlpha(obj, ALPHA);
+		Obj_SetRenderPriority(obj, initPriority-0.01);
+		ObjRender_SetAngleZ(obj, angle);
+	
+		ObjRender_SetPosition(obj, x, y, 0);
+	
+		loop(duration){
+			ALPHA-=startAlpha/duration;
+			ObjRender_SetAlpha(obj, ALPHA);
+			ObjRender_SetScaleXYZ(obj, 1+MOD, 1+MOD, NULL);
+			//MOD+=rate;
+			
+			if(ALPHA<=0){
+				Obj_Delete(obj);
+			}
+			yield;
+		}
+	}
+	
+	task ManageKunaiGrowth(obj){
+		ascent(i in 1..11){
+			ObjRender_SetScaleXYZ(obj, i/10);
+			ObjRender_SetAlpha(obj, i*(255/10));
+			yield;
+		}
+	}
+}
+
+task RedrinCutin{
+
+	let t = 0;
+	
+	let minXSpeed = 0.4;
+	let maxXSpeed = 5;
+	
+	let minYSpeed = 0.4;
+	let maxYSpeed = 4;
+	let accelerationTime = 5;
+	
+	let mainX = (384/2)+155;
+	let mainY = (448/2)-100;
+	let mainAlpha = 0;
+	let mainXSpeed = 5;
+	let mainYSpeed = 4;
+	
+	let fadeInAfterimageDuration = 15;
+	let fadeOutAfterimageDuration = 15;
+	
+	let cutinGraphics = [];
+	
+	let path1 = GetCurrentScriptDirectory~"../sprites/portraits/RedrinCut1.png";
+	let objMain = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objMain, path1);
+	ObjRender_SetBlendType(objMain, BLEND_ALPHA);
+	Obj_SetRenderPriority(objMain, 0.49);
+	ObjSprite2D_SetSourceRect(objMain, 0, 0, 512, 512);
+	ObjSprite2D_SetDestCenter(objMain);
+	ObjRender_SetPosition(objMain, mainX, mainY, 0);
+	ObjRender_SetScaleX(objMain, 1);
+	ObjRender_SetScaleY(objMain, 1);
+	ObjRender_SetAlpha(objMain, 0);
+	cutinGraphics ~= [objMain];
+	
+	let path2 = GetCurrentScriptDirectory~"../sprites/portraits/RedrinCut2.png";
+	let objSigil = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objSigil, path2);
+	ObjRender_SetBlendType(objSigil, BLEND_ALPHA);
+	Obj_SetRenderPriority(objSigil, 0.48);
+	ObjSprite2D_SetSourceRect(objSigil, 0, 0, 512, 512);
+	ObjSprite2D_SetDestCenter(objSigil);
+	ObjRender_SetPosition(objSigil, mainX, mainY, 0);
+	ObjRender_SetScaleX(objSigil, 1);
+	ObjRender_SetScaleY(objSigil, 1);
+	ObjRender_SetAlpha(objSigil, 0);
+	cutinGraphics ~= [objSigil];
+	
+	loop(145){
+		t++;
+		if(t<=20 || t>=125){
+			if(t==125){ maxYSpeed = 4; }
+			if(mainYSpeed<maxYSpeed){ mainYSpeed+=(maxYSpeed-minYSpeed)/accelerationTime; }
+			if(mainYSpeed>maxYSpeed){ mainYSpeed = maxYSpeed; }
+			if(mainXSpeed<maxXSpeed){ mainXSpeed+=(maxXSpeed-minXSpeed)/accelerationTime; }
+			if(mainXSpeed>maxXSpeed){ mainXSpeed = maxXSpeed; }
+		} else {
+			if(mainYSpeed>minYSpeed){ mainYSpeed-=(maxYSpeed-minYSpeed)/accelerationTime; }
+			if(mainYSpeed<minYSpeed){ mainYSpeed = minYSpeed; }
+			if(mainXSpeed>minXSpeed){ mainXSpeed-=(maxXSpeed-minXSpeed)/accelerationTime; }
+			if(mainXSpeed<minXSpeed){ mainXSpeed = minXSpeed; }
+		}
+		if(t>=20 && t<=125 && t%15==0){
+			PulseAura(15, path2, 0, 0, 512, 512, mainX, mainY, mainAlpha/1.1, 0.46);
+		}
+		if(t<=20){
+			mainAlpha+=255/20;
+		} 
+		if(t>=125){
+			mainAlpha-=255/20;
+		}
+		
+		if(t<=20){ 
+			AuraGraphic(fadeInAfterimageDuration, path1, 0, 0, 512, 512, mainX, mainY, mainAlpha, 0.49); 
+			AuraGraphic(fadeInAfterimageDuration, path2, 0, 0, 512, 512, mainX, mainY, mainAlpha, 0.47); 
+		}
+		if(t>=125){ 
+			AuraGraphic(fadeOutAfterimageDuration, path1, 0, 0, 512, 512, mainX, mainY, mainAlpha, 0.49); 
+			AuraGraphic(fadeOutAfterimageDuration, path2, 0, 0, 512, 512, mainX, mainY, mainAlpha, 0.47); 
+		}
+
+		mainX-=mainXSpeed;
+		mainY+=mainYSpeed;
+		
+		for each(int i in cutinGraphics){
+			ObjRender_SetPosition(i, mainX, mainY, 0);
+		}
+		
+		for each(int i in cutinGraphics){
+				ObjRender_SetAlpha(i, mainAlpha);
+		}
+		
+		/*if(t<125){
+		//	ObjRender_SetAlpha(objMain, mainAlpha);
+		//	ObjRender_SetAlpha(objShuriken, mainAlpha);
+			
+		//} else{
+			for each(int i in cutinGraphics){
+				ObjRender_SetAlpha(i, mainAlpha);
+			}
+		}*/
+		yield;
+	}
+	
+	for each(int i in cutinGraphics){
+		Obj_Delete(i);
+	}
+	
+	task AuraGraphic(duration, graphic, left, top, right, bottom, x, y, startAlpha, initPriority){
+		let ALPHA = startAlpha;
+		let MOD = 0;
+		let rate = 2/90 + rand(0.0125, -0.0125);
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, graphic);
+		ObjSprite2D_SetSourceRect(obj, left, top, right, bottom);
+		ObjRender_SetScaleXYZ(obj, 1, 1, NULL);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAlpha(obj, ALPHA);
+		Obj_SetRenderPriority(obj, initPriority-0.01);
+	
+		ObjRender_SetPosition(obj, x, y, 0);
+	
+		loop(duration){
+			ALPHA-=startAlpha/duration;
+			ObjRender_SetAlpha(obj, ALPHA);
+			ObjRender_SetScaleXYZ(obj, 1+MOD, 1+MOD, NULL);
+			//MOD+=rate;
+			
+			if(ALPHA<=0){
+				Obj_Delete(obj);
+			}
+			yield;
+		}
+	}
+	task AuraGraphic(duration, graphic, left, top, right, bottom, x, y, startAlpha, initPriority, angle){
+		let ALPHA = startAlpha;
+		let MOD = 0;
+		let rate = 2/90 + rand(0.0125, -0.0125);
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, graphic);
+		ObjSprite2D_SetSourceRect(obj, left, top, right, bottom);
+		ObjRender_SetScaleXYZ(obj, 1, 1, NULL);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAlpha(obj, ALPHA);
+		Obj_SetRenderPriority(obj, initPriority-0.01);
+		ObjRender_SetAngleZ(obj, angle);
+	
+		ObjRender_SetPosition(obj, x, y, 0);
+	
+		loop(duration){
+			ALPHA-=startAlpha/duration;
+			ObjRender_SetAlpha(obj, ALPHA);
+			ObjRender_SetScaleXYZ(obj, 1+MOD, 1+MOD, NULL);
+			//MOD+=rate;
+			
+			if(ALPHA<=0){
+				Obj_Delete(obj);
+			}
+			yield;
+		}
+	}
+	
+	task PulseAura(duration, graphic, left, top, right, bottom, x, y, startAlpha, initPriority){
+		let ALPHA = startAlpha;
+		let MOD = 0;
+		let rate = 2/90;
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, graphic);
+		ObjSprite2D_SetSourceRect(obj, left, top, right, bottom);
+		ObjRender_SetScaleXYZ(obj, 1, 1, NULL);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAlpha(obj, ALPHA);
+		Obj_SetRenderPriority(obj, initPriority-0.01);
+		ObjRender_SetAngleZ(obj, 0);
+	
+		ObjRender_SetPosition(obj, x, y, 0);
+	
+		loop(duration){
+			ALPHA-=startAlpha/duration;
+			ObjRender_SetAlpha(obj, ALPHA);
+			ObjRender_SetScaleXYZ(obj, 1+MOD, 1+MOD, NULL);
+			MOD+=rate;
+			
+			if(ALPHA<=0){
+				Obj_Delete(obj);
+			}
+			yield;
+		}
+	}
+	
+}
+
+task CreateDelayCloud (let obj, let v, let angle, let vAcc, let vF, let graphic, let delay ) {
+	let rects = GetShotDataInfoA1(graphic, TARGET_ENEMY, INFO_RECT);
+	//WriteLog(graphic);
+	let pathShotsheet;
+	alternative(graphic)
+		if(graphic < 729){
+			pathShotsheet = GetCurrentScriptDirectory~"../lib/TerraShot1x/shot_0.png";
+		}
+		else if(graphic >= 729 && graphic < 1042){
+			pathShotsheet = GetCurrentScriptDirectory~"../lib/TerraShot1x/shot_1.png";
+		}
+		else if(graphic >= 1042 && graphic < 1068){
+			pathShotsheet = GetCurrentScriptDirectory~"../lib/TerraShot1x/shot_2.png";
+		}
+	let frames = 0;
+	let objCloud = CreateSprite (pathShotsheet, GetShotRenderPriorityI, rects, [(rects[2]-rects[0])/2, (rects[3]-rects[1])/2] );
+	if(delay > 0) {
+		ObjRender_SetBlendType(objCloud, GetShotDataInfoA1(graphic, TARGET_ENEMY, INFO_BLEND));
+		ObjRender_SetAngleZ(objCloud, ObjMove_GetAngle(obj)+90);
+		descent(i in 0..delay) {
+			ObjRender_SetPosition(objCloud, ObjMove_GetX(obj), ObjMove_GetY(obj), NULL);
+			ObjRender_SetAlpha(objCloud, 255*cos(i*90/delay));
+			ObjRender_SetScaleXYZ(objCloud, 2-cos(i*90/delay), 2-cos(i*90/delay), NULL);
+			if(Obj_IsDeleted(obj)) { Obj_Delete(objCloud); yield; return; }
+			yield;
+		}
+	} else {
+		yield;
+		frames++;
+	}
+	Obj_Delete(objCloud);
+	ObjRender_SetAlpha(obj, 255);
+	ObjMove_SetSpeed(obj, v);
+	ObjMove_SetAcceleration(obj, vAcc);
+	ObjMove_SetMaxSpeed(obj, vF);
+}
+
+function CreateSprite ( let texture, let priorityInt, let rects, let center ) {
+		// rects = 1-dimensional, size 4
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, texture);
+		Obj_SetRenderPriorityI(obj, priorityInt);
+		ObjSprite2D_SetSourceRect(obj, rects[0], rects[1], rects[2], rects[3]);
+		ObjSprite2D_SetDestRect(obj, -center[0], -center[1], rects[2]-rects[0]-center[0], rects[3]-rects[1]-center[1]);
+		return obj;
+}
+
+task TCharge01(x,y,size,frame,r,g,b,blend,priority){ // Draw a charge circle that has an acceleration on shrinking
+	let obj=ObjPrim_Create(OBJ_SPRITE_2D);
+	let img= GetCurrentScriptDirectory~"./../sprites/charge.png";
+	let set = 360/(frame*4);
+	ObjPrim_SetTexture(obj,img);
+	ObjSprite2D_SetSourceRect(obj,0,0,128,128);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetPosition(obj,x,y,0);
+	ObjRender_SetAlpha(obj,0);
+	ObjRender_SetColor(obj, r, g, b);
+	ObjRender_SetScaleXYZ(obj,size,size,0);
+	ObjRender_SetBlendType(obj,blend);
+	Obj_SetRenderPriorityI(obj,priority);
+	TAlpha;
+	TShrink;
+	task TAlpha{
+		let l=10;
+		let alpha=255/l;
+		loop(l){
+			ObjRender_SetAlpha(obj,alpha);
+			alpha+=255/(l*2);
+			yield;
+			}
+		}
+	task TShrink{
+		let l=frame;
+		let a = size*2/l/l;
+		ascent(i in 0..l){
+			ObjRender_SetScaleXYZ(obj,size,size,0);
+			//ObjRender_SetColor(obj,0,128+64*sin(i*set+240),64+64*sin(i*set+0));
+			size = size-i*a;
+			yield;
+			}
+		Obj_Delete(obj);
+	}
+}
+
+task TExpan(px,py,maxv,t,r,g,b,alpha){
+	let obj=ObjPrim_Create(OBJ_SPRITE_2D);
+	let img=GetCurrentScriptDirectory~"./../sprites/charge.png";
+	let scale = 0;
+	let v = 0;
+	let time = 0;
+	let alpha2 = 255;
+	let alpha3 = 0;
+	let malpha = 255/t;
+	ObjPrim_SetTexture(obj,img);
+	ObjRender_SetAlpha(obj, alpha);
+	ObjSprite2D_SetSourceRect(obj,0,0,128,128);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetPosition(obj,px,py,0);
+	ObjRender_SetColor(obj,r,g,b);
+	Obj_SetRenderPriorityI(obj,55);
+	Expan;
+		task Expan{
+			descent(i in 0..t){
+			if(time>=50){ alpha2 = malpha*i; alpha3 = alpha2; loop(10){ alpha2-=alpha3/10; ObjRender_SetAlpha(obj, alpha2); wait(1); } break;}
+			ObjRender_SetAlpha(obj,malpha*i);
+			v = (i*maxv/2)/(t*t);
+			scale += v;
+			ObjRender_SetScaleXYZ(obj,scale,scale,0);
+			yield;
+			time++;
+			}
+			Obj_Delete(obj);
+		}
+}
+	
+task ScreenShake(shaketime, intensity){
+		let screenx = Get2DCameraX;
+		let screeny = Get2DCameraY;
+		let x = GetCameraFocusX;
+		let y = GetCameraFocusY;
+		let z = GetCameraFocusZ;
+		let roll = 0;
+		while(shaketime>0){
+			Set2DCameraFocusX(screenx + rand(-intensity, intensity));
+			Set2DCameraFocusY(screeny + rand(-intensity, intensity));
+			//SetCameraFocusXYZ(rand(-intensity, intensity),rand(-intensity, intensity),rand(-intensity, intensity));
+			//SetCameraRoll(GetCameraRoll+360/25);	
+			shaketime--;
+			yield;
+		}
+		Set2DCameraFocusX(screenx);
+		Set2DCameraFocusY(screeny);
+		yield;
+}
+
+task ScreenDistort(EnemyObject, AI, len){
+	let renderTexture = GetReservedRenderTargetName(0);
+
+	SetInvalidRenderPriorityA1(20, 79);
+
+	let objCurentFrame = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objCurentFrame, 80);
+
+	if(len == -1){while(ObjEnemy_GetInfo(EnemyObject, INFO_LIFE) > 0){PerformActions;yield;}}	
+	if(len != -1){while(len>0){len--;PerformActions;yield;}}
+	
+	Obj_Delete(objCurentFrame);
+	ClearInvalidRenderPriority;
+	
+	task PerformActions{
+		let currentFrameTexture = renderTexture;
+		RenderToTextureA1(currentFrameTexture, 20, 79, true);
+		ObjPrim_SetTexture(objCurentFrame, currentFrameTexture);
+		ObjSprite2D_SetSourceRect(objCurentFrame, 32, 16, 416, 464);
+		ObjSprite2D_SetDestRect(objCurentFrame, rand(32, 36+AI), rand(16, 36+AI), rand(416-AI, 416), rand(464-AI, 464));
+	}
+}
+
+task Alert(x,y,dir,frames) {
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+		
+	ObjRender_SetBlendType(objEffect,BLEND_ALPHA);
+	Obj_SetRenderPriorityI(objEffect,39);
+	ObjPrim_SetTexture(objEffect, CSD ~ "img/Alert.png");
+	ObjSprite2D_SetSourceRect(objEffect,0,0,256,256);
+	ObjSprite2D_SetDestCenter(objEffect);
+	ObjRender_SetPosition(objEffect,x,y,0);
+	//ObjRender_SetScaleXYZ(objEffect,0.25,0.25,0.25);
+
+	let t = 0;
+	let alpha = 0;
+	let basealpha = 0;
+	let scale = 0.5;
+	
+	loop(frames) {
+		if(basealpha<140) { basealpha+=140/10; }
+		if(basealpha>=140) { t++; }
+		alpha = basealpha + 60*sin(40*t);
+		if(scale>0.25) { scale-=0.25/20; }
+		ObjRender_SetAlpha(objEffect,alpha);
+		ObjRender_SetScaleXYZ(objEffect,scale,scale,scale);
+		if(dir>90) { ObjRender_SetAngleZ(objEffect,dir+180); }
+		else { ObjRender_SetAngleZ(objEffect, dir); }
+		yield;
+	}
+	basealpha = alpha;
+	loop(20) {
+		alpha-=basealpha/20;
+		ObjRender_SetAlpha(objEffect,alpha);
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+task AlertZone01(num,x,y,dir,frames) { //num must be 2,3,4,or 5
+	let disp = 0;
+	let num1 = 0;
+	let num2 = 0;
+
+	if(num == 2) { num1 = 0; num2 = 0; }
+	else if(num == 3) { num1 = 1; num2 = 0; }
+	else if(num == 4) { num1 = 1; num2 = 1; }
+	else if(num == 5) { num1 = 2; num2 = 1; }
+	else { RaiseError("AlertZone01: num must be between 2 and 5"); }
+	AlertSound;
+	loop(9) {
+		disp = 1;
+		Alert(x,y,dir,frames);
+		loop(num1) {
+			Alert(x+70*disp*cos(dir-90),y+70*disp*sin(dir-90),dir,frames);
+			Alert(x+70*disp*cos(dir+90),y+70*disp*sin(dir+90),dir,frames);
+			disp++;
+		}
+		wait(2);
+		x+=35*cos(dir);
+		y+=35*sin(dir);
+		disp = 1;
+		Alert(x+35*cos(dir-90),y+35*sin(dir-90),dir,frames);
+		Alert(x+35*cos(dir+90),y+35*sin(dir+90),dir,frames);
+		loop(num2) {
+			Alert(x+35*cos(dir-90)*disp+70*cos(dir-90)*disp,y+35*sin(dir-90)+70*sin(dir-90)*disp,dir,frames);
+			Alert(x+35*cos(dir+90)*disp+70*cos(dir+90)*disp,y+35*sin(dir+90)+70*sin(dir+90)*disp,dir,frames);
+			disp++;
+		}
+		wait(2);
+		x+=35*cos(dir);
+		y+=35*sin(dir);
+	}
+	task AlertSound {
+		loop(5) {
+			PlaySoundEffect("alert", 100, GetStgFrameWidth/2);
+			wait(8);
+		}
+	}
+}
+task AlertZone02(num,x,y,frames) {
+	AlertSound;
+	Alert(x,y,0,frames);
+	if(num>1) {
+		Alert(x+35,y+35,0,frames);
+		Alert(x+35,y-35,0,frames);
+		Alert(x-35,y+35,0,frames);
+		Alert(x-35,y-35,0,frames);
+	}
+	wait(3);
+	if(num>2) {
+		Alert(x+70,y,0,frames);
+		Alert(x-70,y,0,frames);
+		Alert(x,y+70,0,frames);
+		Alert(x,y-70,0,frames);
+	}
+	wait(3);
+	if(num>3) {
+		Alert(x+105,y+105,0,frames);
+		Alert(x+105,y-105,0,frames);
+		Alert(x-105,y+105,0,frames);
+		Alert(x-105,y-105,0,frames);
+	}
+	wait(3);
+	if(num>4) {
+		Alert(x+140,y,0,frames);
+		Alert(x-140,y,0,frames);
+		Alert(x,y+140,0,frames);
+		Alert(x,y-140,0,frames);
+	}
+	task AlertSound {
+		loop(5) {
+			PlaySoundEffect("alert", 100, x);
+			wait(8);
+		}
+	}
+}
+task AlertZone03(num_width,num_length,x,y,dir,frames) { //num must be 2,3,4,or 5
+	let disp = 0;
+	let num1 = 0;
+	let num2 = 0;
+
+	if(num_width == 2) { num1 = 0; num2 = 0; }
+	else if(num_width == 3) { num1 = 1; num2 = 0; }
+	else if(num_width == 4) { num1 = 1; num2 = 1; }
+	else if(num_width == 5) { num1 = 2; num2 = 1; }
+	else { RaiseError("AlertZone03: num_width must be 2, 3, 4, or 5"); }
+	AlertSound;
+	loop(num_length) {
+		disp = 1;
+		Alert(x,y,dir,frames);
+		loop(num1) {
+			Alert(x+70*disp*cos(dir-90),y+70*disp*sin(dir-90),dir,frames);
+			Alert(x+70*disp*cos(dir+90),y+70*disp*sin(dir+90),dir,frames);
+			disp++;
+		}
+		wait(2);
+		x+=35*cos(dir);
+		y+=35*sin(dir);
+		disp = 1;
+		Alert(x+35*cos(dir-90),y+35*sin(dir-90),dir,frames);
+		Alert(x+35*cos(dir+90),y+35*sin(dir+90),dir,frames);
+		loop(num2) {
+			Alert(x+35*cos(dir-90)*disp+70*cos(dir-90)*disp,y+35*sin(dir-90)+70*sin(dir-90)*disp,dir,frames);
+			Alert(x+35*cos(dir+90)*disp+70*cos(dir+90)*disp,y+35*sin(dir+90)+70*sin(dir+90)*disp,dir,frames);
+			disp++;
+		}
+		wait(2);
+		x+=35*cos(dir);
+		y+=35*sin(dir);
+	}
+	task AlertSound {
+		loop(5) {
+			PlaySoundEffect("alert",100, 192);
+			wait(8);
+		}
+	}
+}
+
+task ConcentrationB1(x,y,duration,num,angle,rot,speed,layer,color) {
+	let color2 = [];
+	ascent(i in 0..length(color)) {
+		color2 = color2 ~ [color[i]/2];
+	}
+
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+
+	ObjRender_SetBlendType(objEffect,BLEND_SUBTRACT);
+	Obj_SetRenderPriorityI(objEffect,layer);
+	ObjPrim_SetTexture(objEffect, CSD ~ "img/Light.png");
+	ObjSpriteList2D_SetSourceRect(objEffect,0,0,64,64);
+	ObjSpriteList2D_SetDestCenter(objEffect);
+
+	ClearVertices;
+
+	loop(duration) {
+		//ObjSpriteList2D_ClearVertexCount(objEffect);
+		//if(!Obj_IsDeleted(objEnemy)) {
+			loop(num) {
+				DarkConcentration(x,y,objEffect,angle,(0.4+randEff(1.4,1.8))*rot,400+randEff(0,128),speed,layer,color);
+				DarkConcentration(x,y,objEffect,angle+(360/num/2),randEff(1.4,1.8)*rot,400+randEff(0,128),speed,layer,color2);
+				angle+=360/num;
+			}
+		//}
+		yield;
+	}
+	wait(150);
+	Obj_Delete(objEffect);
+	task ClearVertices {
+		while(!Obj_IsDeleted(objEffect)) {
+			ObjSpriteList2D_ClearVertexCount(objEffect);
+			yield;
+		}
+	}
+}
+
+task DarkConcentration(x,y,objEffect,angle,dangle,disp,ddisp,layer,color) { //Adapted from Mystical Power Plant
+	if(!GetAreaCommonData("Options","Particle",true)) { return; }
+	ObjRender_SetAngleXYZ(objEffect,0,0,randEff(0,360));
+
+	let dispmax = randEff(disp-64,disp);
+	let disp1 = 0;
+	let dispA = 0;
+	let alpha1 = 0;
+	let alphaA = 0;
+	let scalemax = randEff(0.6,1.4);
+	let scale2 = scalemax*2;
+	let angle2 = randEff(-14,14);
+
+	while(disp1<0.999) {
+		angle2+=dangle;
+
+		if(alpha1<1){ alphaA+=10; }
+		alpha1 = 1*sin(alphaA);
+
+		dispA+=ddisp;
+		disp1 = 1*sin(dispA);
+
+		//if(Obj_IsDeleted(objEnemy)) { Obj_Delete(objEffect); return; }
+		ObjRender_SetPosition(objEffect,x+(dispmax-disp1*dispmax)*cos(angle+angle2),y+(dispmax-disp1*dispmax)*sin(angle+angle2),0);
+		ObjRender_SetScaleXYZ(objEffect,disp1*scalemax,disp1*scalemax,0);
+		ObjRender_SetColor(objEffect,alpha1*color[0],alpha1*color[1],alpha1*color[2]);
+		ObjSpriteList2D_AddVertex(objEffect);
+		yield;
+	}
+	alpha1 = 0;
+	alphaA = 0;
+	while(alpha1<1) {
+		angle2+=dangle;
+
+		alphaA+=2.5;
+		alpha1 = 1*sin(alphaA);
+
+		if(scalemax<scale2) { scalemax+=(scale2/2)/30; }
+
+		ObjRender_SetPosition(objEffect,x+(dispmax-disp1*dispmax)*cos(angle+angle2),y+(dispmax-disp1*dispmax)*sin(angle+angle2),0);
+		ObjRender_SetScaleXYZ(objEffect,disp1*scalemax,disp1*scalemax,0);
+		ObjRender_SetColor(objEffect,color[0]-alpha1*color[0],color[1]-alpha1*color[1],color[2]-alpha1*color[2]);
+		ObjSpriteList2D_AddVertex(objEffect);
+		yield;
+	}
+	wait(30);
+	Obj_Delete(objEffect);
+}
+
+/*
+task ConcentrationB1(objEnemy,duration,num,angle,rot,speed,layer,color) {
+	let color2 = [];
+	ascent(i in 0..length(color)) {
+		color2 = color2 ~ [color[i]/2];
+	}
+
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_LIST_2D);
+
+	ObjRender_SetBlendType(objEffect,BLEND_SUBTRACT);
+	Obj_SetRenderPriorityI(objEffect,layer);
+	ObjPrim_SetTexture(objEffect, CSD ~ "img/Light.png");
+	ObjSpriteList2D_SetSourceRect(objEffect,0,0,64,64);
+	ObjSpriteList2D_SetDestCenter(objEffect);
+
+	ClearVertices;
+
+	loop(duration) {
+		//ObjSpriteList2D_ClearVertexCount(objEffect);
+		if(!Obj_IsDeleted(objEnemy)) {
+			loop(num) {
+				DarkConcentration(objEnemy,objEffect,angle,(0.4+randEff(1.4,1.8))*rot,400+randEff(0,128),speed,layer,color);
+				DarkConcentration(objEnemy,objEffect,angle+(360/num/2),randEff(1.4,1.8)*rot,400+randEff(0,128),speed,layer,color2);
+				angle+=360/num;
+			}
+		}
+		yield;
+	}
+	wait(150);
+	Obj_Delete(objEffect);
+	task ClearVertices {
+		while(!Obj_IsDeleted(objEffect)) {
+			ObjSpriteList2D_ClearVertexCount(objEffect);
+			yield;
+		}
+	}
+}
+
+task DarkConcentration(objEnemy,objEffect,angle,dangle,disp,ddisp,layer,color) { //Adapted from Mystical Power Plant
+	if(!GetAreaCommonData("Options","Particle",true)) { return; }
+	ObjRender_SetAngleXYZ(objEffect,0,0,randEff(0,360));
+
+	let dispmax = randEff(disp-64,disp);
+	let disp1 = 0;
+	let dispA = 0;
+	let alpha1 = 0;
+	let alphaA = 0;
+	let scalemax = randEff(0.6,1.4);
+	let scale2 = scalemax*2;
+	let angle2 = randEff(-14,14);
+
+	while(disp1<0.999) {
+		angle2+=dangle;
+
+		if(alpha1<1){ alphaA+=10; }
+		alpha1 = 1*sin(alphaA);
+
+		dispA+=ddisp;
+		disp1 = 1*sin(dispA);
+
+		if(Obj_IsDeleted(objEnemy)) { Obj_Delete(objEffect); return; }
+		ObjRender_SetPosition(objEffect,ObjRender_GetX(objEnemy)+(dispmax-disp1*dispmax)*cos(angle+angle2),ObjRender_GetY(objEnemy)+(dispmax-disp1*dispmax)*sin(angle+angle2),0);
+		ObjRender_SetScaleXYZ(objEffect,disp1*scalemax,disp1*scalemax,0);
+		ObjRender_SetColor(objEffect,alpha1*color[0],alpha1*color[1],alpha1*color[2]);
+		ObjSpriteList2D_AddVertex(objEffect);
+		yield;
+	}
+	alpha1 = 0;
+	alphaA = 0;
+	while(alpha1<1) {
+		angle2+=dangle;
+
+		alphaA+=2.5;
+		alpha1 = 1*sin(alphaA);
+
+		if(scalemax<scale2) { scalemax+=(scale2/2)/30; }
+
+		ObjRender_SetPosition(objEffect,ObjRender_GetX(objEnemy)+(dispmax-disp1*dispmax)*cos(angle+angle2),ObjRender_GetY(objEnemy)+(dispmax-disp1*dispmax)*sin(angle+angle2),0);
+		ObjRender_SetScaleXYZ(objEffect,disp1*scalemax,disp1*scalemax,0);
+		ObjRender_SetColor(objEffect,color[0]-alpha1*color[0],color[1]-alpha1*color[1],color[2]-alpha1*color[2]);
+		ObjSpriteList2D_AddVertex(objEffect);
+		yield;
+	}
+	//Obj_Delete(objEffect);
+}*/
+
+
+//function wait(w){ loop(w){ yield; } }

@@ -1,0 +1,13 @@
+#include "../../tricky_system/Event_Const.dnh"
+
+function ObjCutin_SetSpellcardS3(SpellName, R, G, B){
+	NotifyEventAll(EV_DECLARESPELL,[["1"],[SpellName],[R],[G],[B]]);
+}
+
+function ObjCutin_SetSpellcardS4(SpellName, image, cuttype, R, G, B){
+	NotifyEventAll(EV_DECLARESPELL,[["2"],[SpellName],[image],[cuttype],[R],[G],[B]]);
+}
+
+function ObjCutin_LaunchS3(type, image, difficulty){
+	NotifyEventAll(EV_DECLARESPELL,[["3"],[type],[image],[difficulty]]);
+}

@@ -1,0 +1,235 @@
+#TouhouDanmakufu
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Cole Nonspell 1"]
+#Text["aaa"]
+#Background["./NamelessPath.dnh"]
+#Player["./../lib/TrickyPlayer/Tricky.dnh"]
+
+#include "./../lib/TerraShot1x/shot_const.dnh"
+#include "./../lib/includes/BossIncludes.dnh"
+#include "./../lib/includes/EffectFunctions.dnh"
+#include "../tricky_system/WishLib.dnh"
+#include "../tricky_system/ECL.dnh"
+
+let flower_x = [-112,112,-64,64];
+let flower_y = [36,36,-84,-84];
+
+@Event{
+	alternative(GetEventType())
+		case(EV_REQUEST_LIFE){ SetScriptResult(3000); }
+		case(EV_REQUEST_TIMER){ SetScriptResult(48); }
+}
+
+@Initialize{
+
+	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+	ObjEnemy_Regist(objEnemy);
+	Invuln(objEnemy, 120, 47.5, 40); //70,75
+	PlayEnemyHitSound(objEnemy, 1);
+
+	let Cole = GetCurrentScriptDirectory~"sprites/Cole_Sheet.png";
+	ObjPrim_SetTexture(objEnemy, Cole); 
+	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 128, 128);
+	ascent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 128*x, 128, 128*x+128);}
+	descent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 128*x, 128, 128*x+128);}
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_RIGHT, 128, 128*x, 128*2, 128*x+128);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 128, 128*3, 128*2, 128*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 128, 128*2, 128*2, 128*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 128, 128*1, 128*2, 128*2);
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_LEFT, 128*2, 128*x, 128*3, 128*x+128);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 128*2, 128*3, 128*3, 128*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 128*2, 128*2, 128*3, 128*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 128*2, 128*1, 128*3, 128*2);
+	ascent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACK, 128*4, 128*x, 128*5, 128*x+128);}
+	descent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACKEND, 128*4, 128*x, 128*5, 128*x+128);}
+
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_IDLE, 8);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_LEFT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_RIGHT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_ATTACK, 5);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_RIGHT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_LEFT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_ATTACK, 2);
+	ObjAnim_StartAnimationA2(objEnemy, 0, 0);
+	ObjSprite2D_SetDestCenter(objEnemy); 
+	ObjRender_SetScaleXYZ(objEnemy, 0.75, 0.75, 1);
+	
+	ObjMove_SetPosition(objEnemy, GetCenterX, 120);
+
+	SetAutoDeleteObject(true);
+
+	attack1;
+	End;
+}
+
+task End {
+	while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	//DeleteShotWave(1,GetX,GetY,20);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	PlaySoundEffect("end",60,GetCenterX);
+	Obj_Delete(objEnemy);
+	CloseScript(GetOwnScriptID);
+}
+
+task attack1{
+	SetShotAutoDeleteClip(80, 32, 80, 32);
+	let color = 0;
+	let baseAngle = 90;
+	let iteration = 0;
+	wait(30);
+	loop{
+		TCharge01(GetEnemyX, GetEnemyY, 3, 45, 174, 26, 73, BLEND_ADD_ARGB, 25);
+		//ObjAnim_SetAttackA1(objEnemy, true);
+		PlaySoundEffect("charge2", 100, GetEnemyX);
+		wait(45);
+		//ObjAnim_SetAttackA1(objEnemy, false);
+		
+		angle=0;
+			loop(4){
+				PlaySoundEffect("fam", 80, GetEnemyX);
+				CreateHeartFamiliar(GetEnemyX, GetEnemyY, [0, 1][color%2], baseAngle+angle, [-1, 1][iteration%2]);
+				angle+=360/4;
+				color++;
+			}
+		//angle+=360/4;
+		//color++;
+		baseAngle=rand(85, 95);
+		wait(120);
+		ExMove(objEnemy, GetPlayerX, rand(25, 35), 120+rand(-5, 5), 20, 3, 15);
+		wait(120);
+		iteration++;
+	}	
+}
+
+	task CreateHeartFamiliar(startingX, startingY, type, startAngle, angleMult){
+		let obj = CreateMDNHShotA2(startingX, startingY, 0, startAngle, 0, 0, [SHOT_HEART_RED, SHOT_HEART_PURPLE][type], 30);
+		Obj_SetRenderPriorityI(obj, Obj_GetRenderPriorityI(obj)+1);
+		ObjShot_SetSpellResist(obj, true);
+		let time = 0;
+		let radius = 0;
+		let xMult = 1;
+		let yMult = 0.8;
+		let angle = startAngle;
+		let pastCoords = [startingX, startingY];
+		let currentCoords = [GetEnemyX, GetEnemyY];
+		let aimAngle = 0;
+		let shotAngleOffset = 30;
+		let additionalVariance = [0, shotAngleOffset/4*angleMult, 0, shotAngleOffset/4*angleMult*-1];
+		let varianceCounter = 0;
+		let radiusAcc = 1.5;
+		while(!Obj_IsDeleted(obj)){ //TO DO: Have it face the proper way?
+			angle+=angleMult;
+			if(radius>=50){ 
+				if(radiusAcc>0.25){ radiusAcc-=1/30; }
+			}
+			radius+=radiusAcc;
+			ObjMove_SetPosition(obj, startingX+radius*(sin(angle)*xMult), startingY+radius*(cos(angle)*yMult));
+			pastCoords = currentCoords;
+			currentCoords[0] = ObjMove_GetX(obj);
+			currentCoords[1] = ObjMove_GetY(obj);
+			aimAngle = AngleBetweenPoints(pastCoords[0], pastCoords[1], currentCoords[0], currentCoords[1]);
+			ObjMove_SetAngle(obj, aimAngle);
+			if(time%20==0 && time>30){
+				PlaySoundEffect("shot5", 80, GetEnemyX);
+				ascent(i in -3..4){
+					ascent(j in -1..2){
+						let obj2 = CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 4.25-(absolute(j)*0.35), aimAngle+180+i*shotAngleOffset+(j*0.4)+additionalVariance[varianceCounter%4], -0.175, 1, [SHOT_KUNAI_RED, SHOT_KUNAI_PURPLE][type], 10);
+						DelayedAccelerate(obj2);
+					}
+				}
+				varianceCounter++;
+			}
+			if(time>=210){ 
+				PlaySoundEffect("shot3", 80, GetEnemyX);
+				PlaySoundEffect("se_enep00", 90, GetEnemyX); 
+				HeartShot(ObjMove_GetX(obj), ObjMove_GetY(obj), 22, aimAngle, [SHOT_BALL_RED, SHOT_BALL_PURPLE][type]);
+				Obj_Delete(obj); 
+				}
+			time++;
+			yield;
+		}
+		
+		task DelayedAccelerate(obj){
+			wait(30);
+			if(!Obj_IsDeleted(obj)){
+				ObjMove_SetAcceleration(obj, 0.015);
+				ObjMove_SetMaxSpeed(obj, 4);
+			}
+		}
+	}
+
+//bx     - Formation X
+//by     - Formation Y
+//b_spd  - Base shot speed
+//b_ang  - Formation base angle
+//way    - Number of petals
+//way2   - Number of shots per petal
+//r_main - Radius of the "center"
+//r_sub  - Radius of each "petal"
+//grap   - Shot graphic
+function FlowerFormationShot(bx, by, b_spd, b_ang, way, way2, r_main, r_sub, grap) {
+    let r_petal = r_main + r_sub;
+
+    let arcNullAngle = 0;
+    let arcRadius = 0;
+    {
+        let p0 = [0, 0];
+        let p1 = [cos(0), sin(0)] * r_petal;
+        let p2 = [cos(180 / way), sin(180 / way)] * r_main;
+        let vec1 = p0 - p1;
+        let vec2 = p2 - p1;
+        
+        arcRadius = VectorLength(vec2);
+        
+        //Use the dot product to find the gap angle
+        arcNullAngle = acos((vec1[0] * vec2[0] + vec1[1] * vec2[1]) / (VectorLength(vec1) * arcRadius)) * 2;
+        
+        function VectorLength(v) {
+            return hypot(v[0], v[1]);
+        }
+    }
+    let arcAngle = 360 - arcNullAngle;
+    
+    let r_max = r_petal + r_sub;
+    
+    const pAngRate = 360 / way;
+    ascent (i in 0..way) {
+        let petalAng = b_ang + i * pAngRate + pAngRate / 2;
+        let petalX = r_petal * cos(petalAng);
+        let petalY = r_petal * sin(petalAng);
+        let offAng = arcNullAngle / 2 - 180;
+        //let offAng = 0;
+        ascent (j in 0..way2) {
+            let sx = petalX + arcRadius * cos(petalAng + offAng);
+            let sy = petalY + arcRadius * sin(petalAng + offAng);
+            
+            let ss = hypot(sx, sy) / r_max;
+            let sa = atan2(sy, sx);
+            
+            CreateDNHShotA1(bx + sx, by + sy, ss * b_spd, sa, grap, 8);
+            
+            offAng += arcAngle / way2;
+            //offAng += 360 / way2;
+        }
+    }
+}
+
+task HeartShot(sx, sy, way, angle, graphic)
+        {
+            ascent(i in 0 .. way)
+            {
+                let oa = i*180/(way-1);
+                let vx = (16*sin(oa)^3);
+                let vy = (13*cos(oa)-5*cos(oa*2)-2*cos(oa*3)-cos(oa*4));
+                let ss = (vy^2+vx^2)^0.5 * 0.15;
+                let sa = atan2(vy, vx)-90;
+                let move_a = angle;
+                
+                let obj = CreateShotA2(sx, sy, ss, sa+move_a+180, 0, 0, graphic, 15);  //// one half
+				Obj_SetRenderPriorityI(obj, Obj_GetRenderPriorityI(obj)-1);
+                let obj2 = CreateShotA2(sx, sy, ss, -(sa-move_a+180), 0, 0, graphic, 15); ////other half
+				Obj_SetRenderPriorityI(obj2, Obj_GetRenderPriorityI(obj)-1);
+        
+            }
+        }

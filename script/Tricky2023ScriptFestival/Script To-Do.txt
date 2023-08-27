@@ -1,0 +1,10 @@
+TO-DO
+
+SYSTEM
+-Refine Cole player
+	-meh
+-Have functional bullet delay clouds
+	-So I can stop using Miransu-brand functions that are way less efficient >:(
+	-done
+-Have bullets turn into PIV items when they are deleted by bombs OR at the end of spellcards
+	-blame natashi ain't fixin it

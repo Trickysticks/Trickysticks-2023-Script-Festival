@@ -1,0 +1,59 @@
+#include "./EnemyFunctions.dnh"
+#include "../animation/AnimLib.h"
+#include "./../../lib/includes/Function_Audio.dnh"
+#include "./../../tricky_system/Event_Const.dnh"
+#include "./EffectFunctions.dnh"
+#include "./CutinFunctions.dnh"
+#include "./ItemFunctions.dnh"
+
+//Global Variables
+let objEnemy;
+let objScene = GetEnemyBossSceneObjectID;
+
+let angle = 0;
+let angle2 = 0;
+let angle3 = 0;
+let angle4 = 0;
+
+let frame = 0;
+let frame2 = 0;
+let frame3 = 0;
+let frame4 = 0;
+
+let color = 0;
+let color2 = 0;
+
+let switch = 1;
+let switch2 = 1;
+
+let phase = 0;
+
+let GetEnemyX = 0;
+let GetEnemyY = 0;
+let hb_radius = 28;
+
+@MainLoop{
+
+	GetEnemyX = ObjMove_GetX(objEnemy);
+	GetEnemyY = ObjMove_GetY(objEnemy);
+	
+	hb_radius = GetCommonData("BossHurtboxRadius",28);
+
+	if(GetCommonData("bosshittable", true)==true){
+	ObjEnemy_SetIntersectionCircleToShot(objEnemy, GetEnemyX, GetEnemyY, hb_radius); //28
+	ObjEnemy_SetIntersectionCircleToPlayer(objEnemy, GetEnemyX, GetEnemyY, 22);
+	}
+	
+	//ObjRender_SetAngleZ(objEnemy, 0);
+	//option to animate via spinning
+	if(ObjMove_GetSpeed(objEnemy)>0.25){
+		if(CheckDirectionAL1(objEnemy, "left")){
+			//ObjRender_SetAngleZ(objEnemy, -frame*15.765);
+		}
+		else if(CheckDirectionAL1(objEnemy, "right")){
+			//ObjRender_SetAngleZ(objEnemy, frame*15.765);
+		}
+	}
+	yield;
+}
+

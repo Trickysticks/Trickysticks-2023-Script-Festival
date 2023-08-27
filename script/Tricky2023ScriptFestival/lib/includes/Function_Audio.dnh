@@ -1,0 +1,44 @@
+#include"./../../tricky_system/Event_Const.dnh"
+
+task PlayEnemyHitSound(objEnemy, type){
+	let bosshp = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+	let initbosshp = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+	
+	while(!Obj_IsDeleted(objEnemy)){
+		if(bosshp != ObjEnemy_GetInfo(objEnemy, INFO_LIFE) && type == 1){
+			if(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > initbosshp/8){ PlaySoundEffect("damage1",95, ObjMove_GetX(objEnemy)); }
+			if(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) < initbosshp/8){ PlaySoundEffect("damage2",95, ObjMove_GetX(objEnemy)); }
+		}
+		if(bosshp != ObjEnemy_GetInfo(objEnemy, INFO_LIFE) && type == 2){ PlaySoundEffect("damage1",95, ObjMove_GetX(objEnemy)); }
+		
+		bosshp = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+		loop(6) { yield; }
+	}
+}
+
+function CreateLocalSoundObject(name,path,scriptID) {
+	SetCommonData("ActiveScript",scriptID);
+	NotifyEventAll(EV_LOAD_SOUND,[name,path]);
+}
+function PlaySoundEffect(name,volume,x) {
+	Obj_SetValue(GetSoundObjectID(name),"Volume",volume);
+	Obj_SetValue(GetSoundObjectID(name),"x",x);
+	NotifyEventAll(EV_SOUND,[name]);
+}
+
+function PlayMusic(id) {
+	NotifyEventAll(EV_MUSIC_START,id);
+}
+function FadeOutMusic(frames) {
+	NotifyEventAll(EV_MUSIC_FADE,frames);
+}
+function GetSoundObjectID(name) {
+	let Sound_ID = GetCommonData("Sound ID",[-1]);
+	let Sound_STR = GetCommonData("Sound STR",[-1]);
+	let ID = -1;
+	ascent(i in 0..length(Sound_STR)) {
+		if(Sound_STR[i] == name) { ID = i; break; }
+	}
+	if(ID == -1){ RaiseError("Sound object does not exist: "~name); }
+	return Sound_ID[ID];
+}

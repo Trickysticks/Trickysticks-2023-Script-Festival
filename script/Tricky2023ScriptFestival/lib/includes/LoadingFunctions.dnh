@@ -1,0 +1,19 @@
+#include "../../tricky_system/Event_Const.dnh"
+
+function LoadAllImagesInFolder(path){
+	WriteLog("Loading images in " ~ path);
+	yield;
+	let plist = GetFilePathList(path);
+	let dlist = GetDirectoryList(path);
+	ascent(i in 0..length(plist)){
+		let cFile = plist[i];
+		let fExt = cFile[length(cFile)-3..length(cFile)];
+		if(fExt == "png" || fExt == "jpg" || fExt == "bmp"){
+			LoadTexture(cFile);
+		}
+	}
+	
+	ascent(i in 0..length(dlist)){
+		LoadAllImagesInFolder(dlist[i]);
+	}
+}
