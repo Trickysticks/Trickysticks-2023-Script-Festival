@@ -1,34 +1,17 @@
 let img_CSD = GetCurrentScriptDirectory;
 
-let coleAngry = img_CSD ~ "../../sprites/portraits/ColeAngry.png";
-let coleBlush = img_CSD ~ "../../sprites/portraits/ColeBlush.png";
-let coleHappy = img_CSD ~ "../../sprites/portraits/ColeHappy.png";
-let coleNeutral = img_CSD ~ "../../sprites/portraits/ColeNeutral.png";
-let coleNormal = img_CSD ~ "../../sprites/portraits/ColeNormal.png";
-let coleNormalBlush = img_CSD ~ "../../sprites/portraits/ColeNormalBlush.png";
-let coleSurprised = img_CSD ~ "../../sprites/portraits/ColeSurprised.png";
-let coleSweat = img_CSD ~ "../../sprites/portraits/ColeSweat.png";
+let ashleyAngry = img_CSD ~ "../../sprites/portraits/AshleyAngry.png";
+let ashleyAnnoyed = img_CSD ~ "../../sprites/portraits/AshleyAnnoyed.png";
+let ashleyConfused = img_CSD ~ "../../sprites/portraits/AshleyConfused.png";
+let ashleyHappy = img_CSD ~ "../../sprites/portraits/AshleyHappy.png";
+let ashleyNormal = img_CSD ~ "../../sprites/portraits/AshleyNormal.png";
+let ashleySurprised = img_CSD ~ "../../sprites/portraits/AshleySurprised.png";
+let ashleyWorried = img_CSD ~ "../../sprites/portraits/AshleyWorried.png";
 
-let justinDefeatedAngry = img_CSD ~ "../../sprites/portraits/JustinDefeatedAngry.png";
-let justinDefeatedBlush = img_CSD ~ "../../sprites/portraits/JustinDefeatedBlush.png";
-let justinDefeatedConcerned = img_CSD ~ "../../sprites/portraits/JustinDefeatedConcerned.png";
-let justinDefeatedConfused = img_CSD ~ "../../sprites/portraits/JustinDefeatedConfused.png";
-let justinDefeatedHappy = img_CSD ~ "../../sprites/portraits/JustinDefeatedHappy.png";
-let justinDefeatedNeutral = img_CSD ~ "../../sprites/portraits/JustinDefeatedNeutral.png";
-let justinDefeatedWink = img_CSD ~ "../../sprites/portraits/JustinDefeatedWink.png";
-
-let justinPlainAngry = img_CSD ~ "../../sprites/portraits/JustinPlainAngry.png";
-let justinPlainBlush = img_CSD ~ "../../sprites/portraits/JustinPlainBlush.png";
-let justinPlainConcerned = img_CSD ~ "../../sprites/portraits/JustinPlainConcerned.png";
-let justinPlainConfused = img_CSD ~ "../../sprites/portraits/JustinPlainConfused.png";
-let justinPlainHappy = img_CSD ~ "../../sprites/portraits/JustinPlainHappy.png";
-let justinPlainNeutral = img_CSD ~ "../../sprites/portraits/JustinPlainNeutral.png";
-let justinPlainWink = img_CSD ~ "../../sprites/portraits/JustinPlainWink.png";
-
-let justinSwordAngry = img_CSD ~ "../../sprites/portraits/JustinSwordAngry.png";
-let justinSwordBlush = img_CSD ~ "../../sprites/portraits/JustinSwordBlush.png";
-let justinSwordConcerned = img_CSD ~ "../../sprites/portraits/JustinSwordConcerned.png";
-let justinSwordConfused = img_CSD ~ "../../sprites/portraits/JustinSwordConfused.png";
-let justinSwordHappy = img_CSD ~ "../../sprites/portraits/JustinSwordHappy.png";
-let justinSwordNeutral = img_CSD ~ "../../sprites/portraits/JustinSwordNeutral.png";
-let justinSwordWink = img_CSD ~ "../../sprites/portraits/JustinSwordWink.png";
+let ryoutarouAngry = img_CSD ~ "../../sprites/portraits/RyoutarouAngry.png";
+let ryoutarouBlushing = img_CSD ~ "../../sprites/portraits/RyoutarouBlushing.png";
+let ryoutarouConfused = img_CSD ~ "../../sprites/portraits/RyoutarouConfused.png";
+let ryoutarouHappy = img_CSD ~ "../../sprites/portraits/RyoutarouHappy.png";
+let ryoutarouSurprised = img_CSD ~ "../../sprites/portraits/RyoutarouSurprised.png";
+let ryoutarouTired = img_CSD ~ "../../sprites/portraits/RyoutarouTired.png";
+let ryoutarouWorried = img_CSD ~ "../../sprites/portraits/RyoutarouWorried.png";
