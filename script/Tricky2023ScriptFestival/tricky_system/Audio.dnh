@@ -124,9 +124,9 @@ function PlayMusic(id) {
 	alternative(id)
 		case(1.1) {
 			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm1.ogg");
-			ObjSound_SetLoopSampleCount(objSound, 484349, 3776091);
+			ObjSound_SetLoopSampleCount(objSound, 0, 7755828);
 			ObjSound_SetLoopEnable(objSound,true);
-			DrawBGMText("Crossroad -Advanced-");
+			DrawBGMText("Infiltrator");
 			vol = 0.95;
 		}
 		case(1.15) {
@@ -139,7 +139,7 @@ function PlayMusic(id) {
 		}
 		case(1.2) {
 			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm2.ogg");
-			DrawBGMText("ouka_beni.mp3");
+			DrawBGMText("Freak Experiment of a Man Named Gabe");
 			ObjSound_SetLoopSampleCount(objSound, 1323282, 10741824);
 			ObjSound_SetLoopEnable(objSound, true);
 			vol = 1;

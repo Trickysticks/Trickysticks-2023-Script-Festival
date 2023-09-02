@@ -1,0 +1,65 @@
+#TouhouDanmakufu[Plural]
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Justin Boss"]
+#Player["./../lib/ColePlayer/Cole.dnh"]
+
+#include "./../lib/includes/Function_Audio.dnh"
+#include "./../lib/includes/LoadingFunctions.dnh"
+#include "./../tricky_system/Event_Const.dnh"
+#include "./../lib/includes/EffectFunctions.dnh"
+#include "./../tricky_system/WishLib.dnh"
+
+let obj;
+let CSD = GetCurrentScriptDirectory;
+let scriptBackground;
+
+@Initialize {
+	LoadAllImagesInFolder(CSD~"../");
+
+	SetPlayerLife(6);
+	scriptBackground = LoadScript(GetCurrentScriptDirectory ~ "./NamelessPath.dnh");
+	StartScript(scriptBackground);
+	
+	obj = ObjEnemyBossScene_Create;
+	ObjEnemyBossScene_Add(obj, 0, CSD ~ "JustinN1.dnh");
+	ObjEnemyBossScene_Add(obj, 0, CSD ~ "JustinS1.dnh");
+	ObjEnemyBossScene_Add(obj, 1, CSD ~ "JustinN2.dnh");
+	ObjEnemyBossScene_Add(obj, 1, CSD ~ "JustinS2.dnh");
+	ObjEnemyBossScene_Add(obj, 2, CSD ~ "JustinS3.dnh");
+	ObjEnemyBossScene_LoadInThread(obj);
+	
+	Plural;
+}
+
+@MainLoop {
+	yield;
+}
+
+@Event{
+
+	alternative(GetEventType())	
+	case(EV_PAUSE_ENTER){
+		NotifyEventAll(EV_MUSIC_PAUSE, true);
+	}
+	case(EV_PAUSE_LEAVE){
+		NotifyEventAll(EV_MUSIC_RESUME, true);
+	}
+}
+
+@Finalize {
+}
+
+task Plural {
+	SetCommonData("BGSpeed", 4);
+	loop(120){ yield; }
+	PlayMusic(1.2);
+	ObjEnemyBossScene_Regist(obj);
+	//BossCircle;
+	//BossShadow;
+	while(!Obj_IsDeleted(obj)) {
+		yield;
+	}
+	
+	CloseScript(GetOwnScriptID());
+}

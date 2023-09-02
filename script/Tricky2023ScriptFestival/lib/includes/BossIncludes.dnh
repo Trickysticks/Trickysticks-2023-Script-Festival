@@ -44,16 +44,17 @@ let hb_radius = 28;
 	ObjEnemy_SetIntersectionCircleToPlayer(objEnemy, GetEnemyX, GetEnemyY, 22);
 	}
 	
-	//ObjRender_SetAngleZ(objEnemy, 0);
+	ObjRender_SetAngleZ(objEnemy, 0);
 	//option to animate via spinning
 	if(ObjMove_GetSpeed(objEnemy)>0.25){
 		if(CheckDirectionAL1(objEnemy, "left")){
-			//ObjRender_SetAngleZ(objEnemy, -frame*15.765);
+			ObjRender_SetAngleZ(objEnemy, -frame*15.765);
 		}
 		else if(CheckDirectionAL1(objEnemy, "right")){
-			//ObjRender_SetAngleZ(objEnemy, frame*15.765);
+			ObjRender_SetAngleZ(objEnemy, frame*15.765);
 		}
 	}
+	frame++;
 	yield;
 }
 

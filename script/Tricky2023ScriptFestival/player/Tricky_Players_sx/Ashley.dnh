@@ -194,7 +194,7 @@ task TSpell(){
 			NotifyEvent(SFXSCR, EV_PLAY_SFX, 1);
 			loop(3){
 				float an = 90 + rand(-i*0.75, i*0.75);
-				int sh = CreatePlayerShotA1(GetPlayerX()+16*cos(an), GetPlayerY() + 16 * sin(an), rand(15, 25), an, 10, 9999, 201);
+				int sh = CreatePlayerShotA1(GetPlayerX()+16*cos(an), GetPlayerY() + 16 * sin(an), rand(15, 25), an, 2, 9999, 201);
 				ObjShot_SetSpellFactor(sh, true);
 				ObjRender_SetScaleXYZ(sh, 3, 5, 0);
 			}
@@ -206,7 +206,7 @@ task TSpell(){
 			NotifyEvent(SFXSCR, EV_PLAY_SFX, 7);
 			int _i = absolute((i-5) % (2*5) - 5);
 			Quake(3, 5);
-			CreateBulletLaser(GetPlayerX + 40 * sin(i*40), 600, rand(65, 75), 270+1*sin(i*40), 1200, 120, 12.5, 9999, 224, 0, true);
+			CreateBulletLaser(GetPlayerX + 35 * sin(i*40), 600, rand(65, 75), 270+1*sin(i*40), 1200, 120, 12.5, 9999, 224, 0, true);
 			
 			if(i % 3 == 0){
 				NotifyEvent(SFXSCR, EV_PLAY_SFX, 11);
@@ -215,7 +215,7 @@ task TSpell(){
 				ascent(j in 0..36){
 					float sp = rand(8, 25);
 					ascent(k in 0..3){
-						int s = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), sp, j*10+r+k*2, 3, 9999, rand(222, 224));
+						int s = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), sp, j*10+r+k*2, 2, 9999, rand(222, 224));
 						ObjShot_SetSpellFactor(s, true);
 						ObjRender_SetBlendType(s, BLEND_ADD_ARGB);
 					}
@@ -238,7 +238,7 @@ task TSpell(){
 				ascent(j in 0..36){
 					float sp = rand(3, 14);
 					ascent(k in 0..3){
-						int s = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), sp, j*10+r+k*2, 3, 9999, rand(222, 224));
+						int s = CreatePlayerShotA1(GetPlayerX(), GetPlayerY(), sp, j*10+r+k*2, 2, 9999, rand(222, 224));
 						ObjShot_SetSpellFactor(s, true);
 						ObjRender_SetBlendType(s, BLEND_ADD_ARGB);
 					}

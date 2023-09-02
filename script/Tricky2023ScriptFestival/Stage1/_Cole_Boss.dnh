@@ -2,7 +2,7 @@
 #ScriptVersion[3]
 #System["./../tricky_system/TrickySystem.dnh"]
 #Title["Cole Boss"]
-#Player["./../player/Tricky_Players_sx/Ashley.dnh", "./../player/Tricky_Players_sx/Cole.dnh", "./../player/Tricky_Players_sx/Tricky.dnh"]
+#Player["./../player/Tricky_Players_sx/Ashley.dnh"]
 
 #include "./../lib/includes/Function_Audio.dnh"
 #include "./../tricky_system/Event_Const.dnh"

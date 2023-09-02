@@ -164,9 +164,11 @@ task TStage{
 	
 	PlayMusic(1.1); 
 	
-	wait(210);
-	Title;
-	wait(60);
+	//wait(210);
+	
+	//Title;
+	
+	wait(175);
 	wait(240);
 	SetCommonData("BGSpeed", 0.5);
 	SetShotAutoDeleteClip(32, 40, 32, 32);

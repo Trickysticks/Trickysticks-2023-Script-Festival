@@ -2,9 +2,9 @@
 #ScriptVersion[3]
 #System["./default_system/Default_System.txt"]
 #System["./tricky_system/TrickySystem.dnh"]
-#Title["Gelid Greetings"]
-#Text["It's cold and Cole is mad.[r]Beware the angry demon."]
-#Player["./player/Tricky_Players_sx/Ashley.dnh", "./player/Tricky_Players_sx/Cole.dnh", "./player/Tricky_Players_sx/Tricky.dnh"]
+#Title["AshleyQuest© 2023"]
+#Text["Join Ashley Lightman on her quest.[r]What quest, you say? Violence.[r]That's, like, totally valid!"]
+#Player["./player/Tricky_Players_sx/Ashley.dnh"]
 
 let scriptStage1;
 let scriptStage2;
