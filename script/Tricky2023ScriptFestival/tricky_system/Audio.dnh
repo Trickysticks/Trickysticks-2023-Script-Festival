@@ -140,15 +140,16 @@ function PlayMusic(id) {
 		case(1.2) {
 			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm2.ogg");
 			DrawBGMText("Freak Experiment of a Man Named Gabe");
-			ObjSound_SetLoopSampleCount(objSound, 1323282, 10741824);
+			ObjSound_SetLoopSampleCount(objSound, 1161299, 6656426);
 			ObjSound_SetLoopEnable(objSound, true);
 			vol = 1;
 		}
 		case(1.25) {
+		
 			ObjSound_Load(objSound, MD ~ "sfx/bgm/bgm2.ogg");
-			DrawBGMText("ouka_beni.mp3");
-			ObjSound_SetLoopSampleCount(objSound, 1323282, 10741824);
-			ObjSound_SeekSampleCount(objSound, 10541824);
+			DrawBGMText("Freak Experiment of a Man Named Gabe (LOOP TEST)");
+			ObjSound_SetLoopSampleCount(objSound, 1161299, 6656426);
+			ObjSound_SeekSampleCount(objSound, 6556026);
 			ObjSound_SetLoopEnable(objSound,true);
 
 			vol = 1;

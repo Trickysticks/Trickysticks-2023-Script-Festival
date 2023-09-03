@@ -15,8 +15,8 @@ let EndStateCalled = false;
 let eventhappening = false;
 
 let objmidboss = ObjEnemyBossScene_Create();
-let objmidboss2 = ObjEnemyBossScene_Create();
 let objboss = ObjEnemyBossScene_Create();
+let objboss2 = ObjEnemyBossScene_Create();
 
 let scriptEnemy;
 let scriptBackground;
@@ -38,14 +38,17 @@ let bossStart = false;
 
 task LoadBosses {
 	//WriteLog("Starting Enemy Boss Scene Loading...");
-	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "Justin0.dnh");
-	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "JustinN1.dnh");
-	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "JustinS1.dnh");
-	ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinN2.dnh");
-	ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinS2.dnh");
-	ObjEnemyBossScene_Add(objboss, 2, CSD ~ "JustinS3.dnh");
+	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "Ryoutarou0.dnh");
+	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "RyoutarouN1.dnh");
+	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "RyoutarouS1.dnh");
+	//ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinN2.dnh");
+	//ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinS2.dnh");
+	//ObjEnemyBossScene_Add(objboss, 2, CSD ~ "JustinS3.dnh");
 	//WriteLog("Loading in Load Thread...");
 	ObjEnemyBossScene_LoadInThread(objboss);
+	
+	ObjEnemyBossScene_Add(objboss2, 0, CSD ~ "Ryoutarou1.dnh");
+	ObjEnemyBossScene_LoadInThread(objboss2);
 }
 
 task LoadMusic {
@@ -164,27 +167,32 @@ task TStage{
 	
 	PlayMusic(1.1); 
 	
-	//wait(210);
+	/* don't uncomment this until stage title ready
+	wait(210);
+	Title;
+	*/
 	
-	//Title;
-	
+	/*do uncomment BOTH waits once ready
 	wait(175);
 	wait(240);
+	*/
 	SetCommonData("BGSpeed", 0.5);
 	SetShotAutoDeleteClip(32, 40, 32, 32);
 	//
 
-	Event0;
-	//Event0_Short;
+	//Event0;
+	Event0_Short;
 
 	while(!Obj_IsDeleted(objboss)){
 		yield;
 	}
-	wait(120);
 	
+	ObjEnemyBossScene_Regist(objboss2);
+	wait(120);
 	Event1;
 	eventhappening = true;
 	while(eventhappening){ yield; }
+	
 	FadeOutMusic(120);
 	wait(180);
 	if(GetCommonData("Main Game", false)==true){ CloseStgScene(); }
@@ -442,161 +450,189 @@ task FadeOutWhite {
 
 task Event0{
 	eventhappening = true;
-	let coleX = -20;
-	let coleY = 0;
-	let justinX = 40;
-	let justinY = -10;
+	let ashleyX = -20;
+	let ashleyY = 0;
+	let ryoutarouX = 0;
+	let ryoutarouY = 60;
+	
+	let awkwardWaitTime = 90;
 
 	InitializeEvent(1, 1);
 	HandleEventLogic();
-	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
 	SetCharStatusPresent(0, 0, true);
-	SetCutinGraphic(1, 0, justinPlainNeutral, justinX, justinY, false);
+	SetCutinGraphic(1, 0, ryoutarouWorried, ryoutarouX, ryoutarouY, false);
 	SetCharStatusPresent(1, 0, false);
 	
 	Talking(0);
-	SetEventText(0, 0, "Holy. Fucking. Shit.", 0);
-	SetEventText(0, 4, "Why the fuck are there a buncha[r]goddamn spatial distortions?", 0);
-	SetEventText(0, 4, "I'll need to work four shifts [r]in a row to fix 'em all.", 0);
-	SetEventText(0, 1, "So, I will...!", 0);
+	SetEventText(0, 0, "Another trap down!", 0);
+	SetEventText(0, 0, "Man, I'm good at this.", 0);
 	
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 0, "Take a break before Sandra gets mad.", 0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 4, "I swear she's gonna kill me if [r]I push myself any harder...", 0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 4, "Sanko'll be disappointed if I don't [r]fix the spacey whatevers though...", 0);
-	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
-	SetEventText(0, 1, "Why can't life be easy for once?!", 0);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Aaand I'm making sooooo much noise!", 0);
+	SetEventText(0, 4, "Wouldn't it, like, totally suck if a[r]cat youkai showed up to eat me?", 0);
 	
 	Talking(1);
-	SetEventText(1, 0, "Hey Cole.", 0);
-	SetCutinGraphic(0, 0, coleSurprised, coleX, coleY, false);
+	
+	wait(awkwardWaitTime);
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	wait(awkwardWaitTime);
+	SetCutinGraphic(0, 0, ashleyWorried, ashleyX, ashleyY, false);
+	wait(awkwardWaitTime);
+	SetCutinGraphic(0, 0, ashleyAngry, ashleyX, ashleyY, false);
+	wait(awkwardWaitTime);
+	
+	Talking(0);
+	SetEventText(0, 1, "Where the crap is he!?!", 0);
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 2, "It can't be that hard to find a cat, right?", 0);
+	SetEventText(0, 2, "Am I missing the catnip?", 0);
+	SetEventText(0, 2, "Maybe he's scared because I'm TOO loud.", 0);
+	SetEventText(0, 2, "Do I look eatable? I have to look eatable, right?", 0);
+	SetEventText(0, 2, "Am I too skinny? Wait wait wait, am I too fat?", 0);
+	SetEventText(0, 2, "I can't be fat! Right? Wait, am I JAPANESE-fat?", 0);
 	
 	ObjEnemyBossScene_Regist(objboss);
+	
+	SetEventText(0, 2, "Noooooo way. I have to look elegant and eatable!", 0);
+	SetEventText(0, 2, "Should've asked Vii to come with...", 0);
+	
 	BossShadow;
-	wait(120);
+	
+	SetEventText(0, 2, "...aaactually no she can't summon cats.", 0);
+	SetEventText(0, 2, "Maybe Zuzu can? Or Mr. Lightclaw.", 0);
+	
+	
+	SetEventText(0, 2, "Is that like, a cat racial skill?", 0);
+	SetEventText(0, 2, "Maybe the angry cat man I met at the Lake can do it?", 0);
+	
 	SetCharStatusPresent(1, 0, true);
-	SetEventText(1, 0, "Why are you talking to yourself?", 0);
-	SetCutinGraphic(1, 0, justinPlainConcerned, justinX, justinY, false);
-	SetEventText(1, 0, "You sound loud and angry!", 0);
 	
-	Talking(0);
-	BossName("Justin", 222, 219, 58);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 0, "Oh. Hey yourself, Justin.", 0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "No reason! Just got a lot on my mind.", 0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 0, "Guess I'll just relax instead of thinkin'.", 0);
+	SetEventText(0, 2, "Ooh! I should've brought a fish!", 0);
+	SetEventText(0, 2, "Bitches looove fish.", 0);
 	
 	Talking(1);
-	SetEventText(1, 0, "What's wrong?", 0);
+	SetEventText(1, 0, "Human.", 0);
 	
 	Talking(0);
-	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
-	SetEventText(0, 0, "Render targets.", 0);
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Cat dude.", 0);
+	
+	SetCutinGraphic(0, 0, ashleySurprised, ashleyX, ashleyY, false);
+	SetCutinGraphic(1, 0, ryoutarouSurprised, ryoutarouX, ryoutarouY, false);
+	SetEventText(0, 1, "HOLYSHITIAINGOINDOWNWITHOUTAFIGHT-", 0);
 	
 	Talking(1);
-	SetEventText(1, 0, "...", 0);
-	SetCutinGraphic(1, 0, justinPlainConfused, justinX, justinY, false);
-	SetEventText(1, 0, "What?", 0);
+	SetEventText(1, 1, "MEOWMEOWMEOWMEOWMEOW-", 0);
 	
 	Talking(0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 4, "It's bullshit. Don't worry your [r]cute little head about it.", 0);
-	
-	Talking(1);
-	SetCutinGraphic(1, 0, justinPlainHappy, justinX, justinY, false);
-	SetEventText(1, 0, "Those must be powerful bulls!", 0);
-	SetCutinGraphic(1, 0, justinPlainBlush, justinX, justinY, false);
-	SetEventText(1, 0, "W-wait you called me cute-", 0);
-	
-	Talking(0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "I called you cute 'cause you are.", 0);
-	
-	Talking(1);
-	SetEventText(1, 0, "*audible, kinda cringe blushing*", 0);
-	
-	Talking(0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 0, "Since you're here, can you do me a favor?", 0);
-	SetEventText(0, 0, "Guess it's more like do &quot;us&quot; a favor.", 0);
-	
-	Talking(1);
-	SetCutinGraphic(1, 0, justinPlainNeutral, justinX, justinY, false);
-	SetEventText(1, 0, "Sure! What do you need?", 0);
-	SetCutinGraphic(1, 0, justinPlainWink, justinX, justinY, false);
-	SetEventText(1, 0, "I'll do anything to help a friend!", 0);
-	
-	Talking(0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 0, "That's...weird phrasing.", 0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "Anyway lemme smash you.", 0);
-	
-	Talking(1);
-	SetCutinGraphic(1, 0, justinPlainHappy, justinX, justinY, false);
-	SetEventText(1, 0, "Okay!", 0);
-	
-	Talking(0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
+	SetCutinGraphic(0, 0, ashleySurprised, ashleyX, ashleyY, false);
+	SetCutinGraphic(1, 0, ryoutarouWorried, ryoutarouX, ryoutarouY, false);
 	SetEventText(0, 0, "...", 0);
+	
 	Talking(1);
-	SetCutinGraphic(1, 0, justinPlainNeutral, justinX, justinY, false);
 	SetEventText(1, 0, "...", 0);
-	Talking(0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 0, "...", 0);
-	Talking(1);
-	SetCutinGraphic(1, 0, justinPlainConcerned, justinX, justinY, false);
-	SetEventText(1, 0, "...", 0);
-	SetCutinGraphic(1, 0, justinPlainBlush, justinX, justinY, false);
-	SetEventText(1, 0, "Wait a minute y-you said-", 0);
 	
 	Talking(0);
-	SetEventText(0, 0, "It sure took you a while.", 0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "I meant in danmaku.", 0);
+	SetCutinGraphic(0, 0, ashleyWorried, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Okaaaay. Why don't we start over?", 0);
 	
 	Talking(1);
-	SetEventText(1, 0, "...", 0);
-	SetCutinGraphic(1, 0, justinPlainHappy, justinX, justinY, false);
-	SetEventText(1, 0, "Okay let me get my magic swords!", 0);
+	SetEventText(1, 0, "Yes.", 0);
 	
+	wait(20);
 	SetCharStatusPresent(1, 0, false);
+	NotifyEventAll(EV_KILLBOSS, 99);
+	wait(240);
 	
-	wait(60);
-	SetCutinGraphic(1, 0, justinSwordHappy, justinX, justinY, false);
 	SetCharStatusPresent(1, 0, true);
-	wait(30);
-	
-	SetEventText(1, 0, "Got them!", 0);
+	SetCutinGraphic(1, 0, ryoutarouAngry, ryoutarouX, ryoutarouY, false);
+	Talking(1);
+	SetEventText(1, 1, "Human! I'll eat you!", 0);
 	
 	Talking(0);
-	SetCutinGraphic(0, 0, coleSurprised, coleX, coleY, false);
-	SetEventText(0, 0, "Where did you even go?!", 0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 4, "Anyway, you need practice and I need [r]to beat something up, so this works.", 0);
+	SetCutinGraphic(0, 0, ashleySurprised, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Oh golly gee!", 0);
+	
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Now THAT'S what I expected.", 0);
 	
 	Talking(1);
+	SetCutinGraphic(1, 0, ryoutarouWorried, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "Expected?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Thaaaat's right! This human does her research!", 0);
+	
+	BossName("Ryoutarou Kiriya", 74, 103, 65);
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Your name is Ryoutarou Kiriya.", 0);
+	SetEventText(0, 4, "You live out here in the woods.[r]Caused a problem for some humans.", 0);
+	SetEventText(0, 0, "But more importantlyyy-", 0);
+	
+	SetCutinGraphic(0, 0, ashleyAngry, ashleyX, ashleyY, false);
+	SetCutinGraphic(1, 0, ryoutarouSurprised, ryoutarouX, ryoutarouY, false);
+	SetEventText(0, 5, "You said you'd eat me![r]Why does every cat do that!!!", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, ryoutarouConfused, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "Every...cat?", 0);
+	
+	Talking(0);
+	SetEventText(0, 0, "Yeah!", 0);
+	SetEventText(0, 0, "One said she'd do the strangle into eat combo!", 0);
+	SetEventText(0, 0, "YOU were tired as heck! But still said it!", 0);
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "What's a girl gotta do to get youkai respect?", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, ryoutarouTired, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "Not be a human.", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, ashleyAngry, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Thaaaat's racist!", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, ryoutarouHappy, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "You said all cats are bastards.", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, ashleyConfused, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "...oh, crap, am I the racist one?!", 0);
+	SetEventText(0, 0, "...", 0);
+	
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 4, "Anyway! I'm not afraid of people[r]that have articles on Wikipedia!", 0);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 4, "So, we're gonna settle this[r]the way you animals do it!", 0);
+	
+	Talking(1);
+	SetCutinGraphic(1, 0, ryoutarouWorried, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "I look bigger and you run?", 0);
+	
+	Talking(0);
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Nope!", 0);
+	
 	BossCircle;
 	PlayMusic(1.2);
 	SetCommonData("BGSpeed", 4);
-	SetCutinGraphic(1, 0, justinSwordAngry, justinX, justinY, false);
-	SetEventText(1, 0, "Hey, you won't just beat me up!", 0);
-	
-	Talking(0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "You sure? You never fought me, y'know.", 0);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 1, "I'm gonna shoot you. No hard feelings!", 0);
 	
 	Talking(1);
-	SetCutinGraphic(1, 0, justinSwordHappy, justinX, justinY, false);
-	SetEventText(1, 0, "Even if I lose I'll put up a good fight!", 0);
-	SetCutinGraphic(1, 0, justinSwordWink, justinX, justinY, false);
-	SetEventText(1, 0, "It's all about exercise. Magic exercise!", 0);
+	SetCutinGraphic(1, 0, ryoutarouSurprised, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "Wait-", 0);
 	
+	Talking(0);
+	SetCutinGraphic(0, 0, ashleyAngry, ashleyX, ashleyY, false);
+	SetEventText(0, 1, "Heck no! Die!", 0);
+	
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "...by running out of spellcards I mean.", 0);
+
 	NotifyEventAll(EV_KILLBOSS, 1);
 	FinalizeEvent;
 	eventhappening = false;
@@ -608,7 +644,7 @@ task Event0_Short{
 	BossShadow;
 	wait(120);
 	
-	PlayMusic(1.25);
+	PlayMusic(1.2);
 	BossCircle;
 	SetCommonData("BGSpeed", 4);
 	
@@ -619,91 +655,120 @@ task Event0_Short{
 }
 
 task Event1{
+
 	eventhappening = true;
-	let coleX = -20;
-	let coleY = 0;
-	let justinX = 40;
-	let justinY = -10;
+	let ashleyX = -20;
+	let ashleyY = 0;
+	let ryoutarouX = 0;
+	let ryoutarouY = 60;
+	
+	let awkwardWaitTime = 90;
 
 	InitializeEvent(1, 1);
 	HandleEventLogic();
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
 	SetCharStatusPresent(0, 0, true);
-	SetCutinGraphic(1, 0, justinDefeatedNeutral, justinX, justinY, false);
+	SetCutinGraphic(1, 0, ryoutarouTired, ryoutarouX, ryoutarouY, false);
 	SetCharStatusPresent(1, 0, true);
 	
-	wait(30);
+	Talking(0);
+	SetEventText(0, 0, "Yay I won!", 0);
 	
 	Talking(1);
-	SetEventText(1, 0, "Wow...you're good!", 0);
+	SetEventText(1, 4, "First humans have sorcerous vehicles,[r]next they have sorcerous hair and bows...", 0);
+	
 	
 	Talking(0);
-	SetEventText(0, 0, "'Course I'm good. I'm an expert.", 0);
-	SetEventText(0, 4, "Danmaku, fisticuffs, tapping lands for [r]mana...I can fight in any system!", 0);
-	
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 1, "My hair is NOT sorcerous! Just the fire!", 0);
+	SetEventText(0, 0, "Now, promise you won't try to eat me!", 0);
+
 	Talking(1);
-	SetCutinGraphic(1, 0, justinDefeatedConfused, justinX, justinY, false);
-	SetEventText(1, 0, "What's a land?", 0);
+	SetEventText(1, 0, "Okay.", 0);
 	
 	Talking(0);
-	SetEventText(0, 0, "It's like...creatin' a bond to places you've been.", 0);
-	SetEventText(0, 0, "Then you use that energy to zap their bird.", 0);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Sweet!", 0);
+	
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Can I have an arrow too?", 0);
 	
 	Talking(1);
-	SetCutinGraphic(1, 0, justinDefeatedHappy, justinX, justinY, false);
-	SetEventText(1, 0, "Uh...okay. Nice?", 0);
-	SetCutinGraphic(1, 0, justinDefeatedConcerned, justinX, justinY, false);
-	SetEventText(1, 0, "Do the birds deserve that?", 0);
+	SetEventText(1, 0, "...does your sorcerous-", 0);
 	
 	Talking(0);
-	SetCutinGraphic(0, 0, coleAngry, coleX, coleY, false);
-	SetEventText(0, 0, "They sure as fuck do.", 0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 4, "Anyway, wanna go to your place? [r]I can fix your clothes there.", 0);
+	SetCutinGraphic(0, 0, ashleyAngry, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "NO, the GUN does not shoot ARROWS.", 0);
+	
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "I just think it's neat.", 0);
 	
 	Talking(1);
-	SetCutinGraphic(1, 0, justinDefeatedConcerned, justinX, justinY, false);
-	SetEventText(1, 0, "R-really?", 0);
-	SetCutinGraphic(1, 0, justinDefeatedBlush, justinX, justinY, false);
-	SetEventText(1, 0, "D-do you have to take them off me?", 0);
+	SetEventText(1, 0, "...neat?", 0);
 	
 	Talking(0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 0, "No? I have a demonic dry cleaning spell.", 0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "Then I can use your gym after.", 0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 4, "The Mansion gym smells like [r]antisocial cat these days.", 0);
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 4, "Yeah, archery is cool![r]It's like a martial art.", 0);
 	
 	Talking(1);
-	SetCutinGraphic(1, 0, justinDefeatedConcerned, justinX, justinY, false);
-	SetEventText(1, 0, "I don't like that smell.", 0);
-	SetCutinGraphic(1, 0, justinDefeatedNeutral, justinX, justinY, false);
 	SetEventText(1, 0, "...", 0);
-	SetCutinGraphic(1, 0, justinDefeatedBlush, justinX, justinY, false);
-	SetEventText(1, 0, "I used the swords pretty well, right?", 0);
 	
 	Talking(0);
-	SetCutinGraphic(0, 0, coleHappy, coleX, coleY, false);
-	SetEventText(0, 0, "Yeah, you did!", 0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 4, "Come up with more patterns[r]and you'll be awesome.", 0);
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 4, "And archers train super hard.[r]You make your own arrows right?", 0);
 	
 	Talking(1);
-	SetCutinGraphic(1, 0, justinDefeatedWink, justinX, justinY, false);
-	SetEventText(1, 0, "Thank you, but I'm already awesome.", 0);
-	
+	SetEventText(1, 0, "Weird human...", 0);
+
 	Talking(0);
-	SetCutinGraphic(0, 0, coleSweat, coleX, coleY, false);
-	SetEventText(0, 0, "Always humble, huh.", 0);
-	SetCutinGraphic(0, 0, coleNeutral, coleX, coleY, false);
-	SetEventText(0, 0, "Let's get going, it's freezing.", 0);
+	SetCutinGraphic(0, 0, ashleySurprised, ashleyX, ashleyY, false);
+	NotifyEventAll(EV_KILLBOSS, 99);
+	wait(60);
+	NotifyEventAll(EV_KILLBOSS, 1);
 	
-	SetCharStatusPresent(0, 0, false);
 	SetCharStatusPresent(1, 0, false);
 	
+	Talking(0);
+	SetEventText(0, 0, "Wow, he runs fast!", 0);
+	
+	SetCutinGraphic(0, 0, ashleyConfused, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "...huh, what's this?", 0);
+	
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "...ooh, he dropped an arrow!", 0);
+	
+	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Must've fallen out of his quiver.", 0);
+	
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Yup. Tooootally.", 0);
+	
+	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Anyway.", 0);
+	
+	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
+	SetEventText(0, 0, "Bye now! And I'm NOT a sorceror!", 0);
+	
+	SetCharStatusPresent(0, 0, false);
+	
+	wait(120);
+	
+	
+	SetCutinGraphic(1, 0, ryoutarouWorried, ryoutarouX, ryoutarouY, false);
+	SetCharStatusPresent(1, 0, true);
 	wait(30);
 	
+	Talking(1);
+	
+	wait(30);
+	SetEventText(1, 0, "...", 0);
+	
+	SetCutinGraphic(1, 0, ryoutarouTired, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "...humans are annoying...keep waking me up...", 0);
+	
+	SetCharStatusPresent(1, 0, false);
+	wait(30);
+
 	FinalizeEvent;
 	eventhappening = false;
 }

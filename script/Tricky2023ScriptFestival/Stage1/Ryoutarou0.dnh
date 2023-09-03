@@ -18,7 +18,13 @@
 	SetScriptResult(9999);
 	}
 	case(EV_KILLBOSS){
-	ObjEnemy_SetLife(objEnemy, 0);
+		let eventParam = GetEventArgument(0);
+		let type = eventParam;
+		
+		alternative(type)
+		//case(0) { Event0; }
+		case(99){ MovementShenanigans; }
+		others{ ObjEnemy_SetLife(objEnemy, 0); }
 	}
 }
 
@@ -74,6 +80,12 @@ task MovementTest{
 		ObjMove_SetDestAtFrame(objEnemy, GetCenterX+120, GetClipMinY+120, 120);
 		wait(180);
 	}
+}
+
+task MovementShenanigans{
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX-350, GetClipMinY+80, 120);
+	wait(180);
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX, GetClipMinY+120, 60);
 }
 
 task End {

@@ -1,0 +1,97 @@
+#TouhouDanmakufu
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Ryoutarou Dialogue Dummy TWO!!!"]
+#Background["./NamelessPath.dnh"]
+#Player["./../player/Tricky_Players_sx/Ashley.dnh"]
+
+#include "./../lib/TerraShot1x/shot_const.dnh"
+#include "./../lib/includes/BossIncludes.dnh"
+#include "./../lib/includes/EffectFunctions.dnh"
+
+@Event{
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE){
+	SetScriptResult(1);
+	}
+	case(EV_REQUEST_TIMER){
+	SetScriptResult(9999);
+	}
+	case(EV_KILLBOSS){
+		let eventParam = GetEventArgument(0);
+		let type = eventParam;
+		
+		alternative(type)
+		//case(0) { Event0; }
+		case(99){ MovementShenanigans; }
+		others{ ObjEnemy_SetLife(objEnemy, 0); }
+	}
+}
+
+
+@Initialize{
+	
+	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+	ObjEnemy_Regist(objEnemy);
+	Invuln(objEnemy, 9999999, 60, 75);
+	PlayEnemyHitSound(objEnemy, 1);
+
+	let Ryoutarou = GetCurrentScriptDirectory~"sprites/Ryoutarou_Sheet.png";
+	ObjPrim_SetTexture(objEnemy, Ryoutarou); 
+	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 96, 96);
+	/*
+	ascent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
+	descent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_RIGHT, 96, 96*x, 96*2, 96*x+96);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*3, 96*2, 96*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*2, 96*2, 96*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*1, 96*2, 96*2);
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_LEFT, 96*2, 96*x, 96*3, 96*x+96);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*3, 96*3, 96*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*2, 96*3, 96*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*1, 96*3, 96*2);
+	ascent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACK, 96*4, 96*x, 96*5, 96*x+96);}
+	descent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACKEND, 96*4, 96*x, 96*5, 96*x+96);}
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_IDLE, 8);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_LEFT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_RIGHT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_ATTACK, 5);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_RIGHT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_LEFT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_ATTACK, 2);
+	ObjAnim_StartAnimationA2(objEnemy, 0, 0);
+	*/
+	
+	ObjSprite2D_SetDestCenter(objEnemy); 
+	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
+
+	ObjMove_SetPosition(objEnemy, GetCommonData("ryouX", GetCenterX), GetCommonData("ryouY", 120));
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX, GetClipMinY+120, 60);
+
+	//MovementTest;
+	End;
+}
+
+task MovementTest{
+	wait(120);
+	loop{
+		ObjMove_SetDestAtFrame(objEnemy, GetCenterX-120, GetClipMinY+120, 120);
+		wait(180);
+		ObjMove_SetDestAtFrame(objEnemy, GetCenterX+120, GetClipMinY+120, 120);
+		wait(180);
+	}
+}
+
+task MovementShenanigans{
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX+650, GetClipMinY+80, 105);
+	wait(180);
+}
+
+task End {
+	while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	//DeleteShotWave(1,GetX,GetY,20);
+	DeleteShotAll(TYPE_ALL,TYPE_ITEM);
+	//PlaySoundEffect("end",60,GetCenterX);
+	Obj_Delete(objEnemy);
+	CloseScript(GetOwnScriptID);
+}

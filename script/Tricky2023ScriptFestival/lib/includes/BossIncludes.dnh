@@ -37,6 +37,9 @@ let hb_radius = 28;
 	GetEnemyX = ObjMove_GetX(objEnemy);
 	GetEnemyY = ObjMove_GetY(objEnemy);
 	
+	SetCommonData("ryouX", GetEnemyX);
+	SetCommonData("ryouY", GetEnemyY);
+	
 	hb_radius = GetCommonData("BossHurtboxRadius",28);
 
 	if(GetCommonData("bosshittable", true)==true){
