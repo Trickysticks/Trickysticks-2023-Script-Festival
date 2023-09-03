@@ -1,0 +1,385 @@
+#TouhouDanmakufu
+#ScriptVersion[3]
+#System["./../tricky_system/TrickySystem.dnh"]
+#Title["Ryoutarou Spell 2"]
+#Background["./NamelessPath.dnh"]
+#Player["./../player/Tricky_Players_sx/Ashley.dnh"]
+//#BGM["./../sfx/bgm/bgm2.ogg"]
+
+#include "./../lib/TerraShot1x/shot_const.dnh"
+#include "./../lib/includes/BossIncludes.dnh"
+
+@Event{
+	alternative(GetEventType())
+		case(EV_REQUEST_LIFE){ SetScriptResult(1000); }
+		case(EV_REQUEST_TIMER){ SetScriptResult(999); }
+		case(EV_REQUEST_SPELL_SCORE){ SetScriptResult(10000000); }
+		//case(EV_REQUEST_IS_DURABLE_SPELL){ SetScriptResult(true); }
+		case(EV_GAIN_SPELL){ AddScore(ObjEnemyBossScene_GetInfo(objScene, INFO_SPELL_SCORE)); }
+}
+
+@Initialize{
+
+	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+	ObjEnemy_Regist(objEnemy);
+	Invuln(objEnemy, 300, 7.5, 5);
+	PlayEnemyHitSound(objEnemy, 1);
+	
+	let Ryoutarou = GetCurrentScriptDirectory~"sprites/Ryoutarou_Sheet.png";
+	ObjPrim_SetTexture(objEnemy, Ryoutarou); 
+	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 96, 96);
+	/*
+	ascent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
+	descent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_RIGHT, 96, 96*x, 96*2, 96*x+96);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*3, 96*2, 96*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*2, 96*2, 96*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_RIGHT, 96, 96*1, 96*2, 96*2);
+	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_LEFT, 96*2, 96*x, 96*3, 96*x+96);}
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*3, 96*3, 96*4);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*2, 96*3, 96*3);
+	ObjAnim_AddFrameA1(objEnemy, ANIM_MOVEEND_LEFT, 96*2, 96*1, 96*3, 96*2);
+	ascent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACK, 96*4, 96*x, 96*5, 96*x+96);}
+	descent(x in 0..3){ObjAnim_AddFrameA1(objEnemy, ANIM_ATTACKEND, 96*4, 96*x, 96*5, 96*x+96);}
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_IDLE, 8);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_LEFT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_MOVE_RIGHT, 6);
+	ObjAnim_SetSpeedA1(objEnemy, ANIM_ATTACK, 5);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_RIGHT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_LEFT, 3);
+	ObjAnim_SetLoopPointA1(objEnemy, ANIM_ATTACK, 2);
+	ObjAnim_StartAnimationA2(objEnemy, 0, 0);
+	*/
+	
+	ObjSprite2D_SetDestCenter(objEnemy); 
+	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
+	
+	SetAutoDeleteObject(true);
+	delayedstart;
+	End;
+}
+
+task End {
+	let itemx = 0;
+	let itemy = 0;
+	while(ObjEnemy_GetInfo(objEnemy, INFO_LIFE) > 0) { yield; }
+	
+	BossExplosion(objEnemy, 1, GetOwnScriptID);
+}
+
+task delayedstart{
+	
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX, 120, 60, LERP_DECELERATE);
+	wait(60);
+	
+	ObjEnemyBossScene_StartSpell(objScene);
+	ObjEnemyBossScene_SetSpellTimer(objScene, (75)*(60));
+	PlaySoundEffect("cardcall", 90, GetCenterX);
+	
+	let justin_cut = GetCurrentScriptDirectory~"sprites/RyoutarouCutin.png";
+	ObjCutin_SetSpellcardS4("Trap Sign &quot;Barrage of 8 Million Darts&quot;", justin_cut, "NAZRIN", "205", "133", "63");
+	ObjCutin_LaunchS3("NAZRIN", "0", "Hard");
+	//HiroyukiCutin;
+	NotifyEventAll(EV_SPELLBG, 0);
+	
+	wait(120);
+	attack1;
+	//attack2;
+	SetShotAutoDeleteClip(32, 40, 32, 16);
+}
+
+task attack1{
+	let count = 0;
+	let dir = 0;
+	let dir2 = 0;
+	let radius = 180;
+	let radius2 = 30;
+	let way = 16;
+	let way2 = 19;
+	let one = 1;
+	let wave = 0;
+	let max = 0;
+	let shotRotateDir = 1;
+	
+	loop{
+		
+		PlaySoundEffect("fam", 90, GetEnemyX);
+		CreateTrap(GetCenterX, GetClipMaxY-195, shotRotateDir, 1400);
+		wait(400);
+		
+		PlaySoundEffect("fam", 90, GetEnemyX);
+		ExMove(objEnemy, GetPlayerX+rand(-0.1, 0.1), rand(45, 65), 120+rand(-5, 5), 20, 1, 18);
+		CreateTrap2(GetCenterX+92, GetClipMaxY-180, shotRotateDir, 700);
+		shotRotateDir*=-1;
+		CreateTrap2(GetCenterX-92, GetClipMaxY-180, shotRotateDir, 700);
+		wait(400);
+		shotRotateDir*=-1;
+		
+		
+		PlaySoundEffect("fam", 90, GetEnemyX);
+		ExMove(objEnemy, GetCenterX+rand(-0.1, 0.1), rand(45, 65), 120+rand(-5, 5), 20, 1, 18);
+		CreateTrap2(GetClipMinX+92, GetClipMaxY-210, shotRotateDir, 700);
+		shotRotateDir*=-1;
+		wait(60);
+		PlaySoundEffect("fam", 90, GetEnemyX);
+		ExMove(objEnemy, GetCenterX+rand(-0.1, 0.1), rand(45, 65), 120+rand(-5, 5), 20, 1, 18);
+		CreateTrap2(GetClipMaxX-92, GetClipMaxY-210, shotRotateDir, 700);
+		wait(60);
+		PlaySoundEffect("fam", 90, GetEnemyX);
+		ExMove(objEnemy, GetCenterX+rand(-0.1, 0.1), rand(45, 65), 120+rand(-5, 5), 20, 1, 18);
+		CreateTrap2(GetClipMaxX-92, GetClipMinY+90, shotRotateDir, 700);
+		shotRotateDir*=-1;
+		wait(60);
+		PlaySoundEffect("fam", 90, GetEnemyX);
+		ObjMove_SetDestAtWeight(objEnemy, GetCenterX, 120, 10, 4);
+		CreateTrap2(GetClipMinX+92, GetClipMinY+90, shotRotateDir, 700);
+		wait(295);
+		shotRotateDir*=-1;
+		
+	}
+}
+
+task CreateTrap(x, y, shotRotateDir, enemLife) {
+	let objEnemy = ObjEnemy_Create(OBJ_ENEMY);
+	
+	ObjEnemy_SetLife(objEnemy, enemLife);
+	ObjEnemy_SetDamageRate(objEnemy, 100, 100);
+	Invuln(objEnemy, 60, 75, 50);
+	
+	//Invuln(objEnemy, 30, 100, 100);
+	
+	let substitute = GetCurrentScriptDirectory~"sprites/familiar.png";
+	ObjPrim_SetTexture(objEnemy, substitute);
+	ObjSprite2D_SetSourceRect(objEnemy, 128, 64, 192, 128);
+	ObjSprite2D_SetDestCenter(objEnemy);
+	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
+	
+	ObjEnemy_Regist(objEnemy);
+	ObjMove_SetPosition(objEnemy, GetEnemyX, GetEnemyY);
+	ObjMove_SetDestAtWeight(objEnemy, x, y, 5, 3);
+	
+	let GetX = 0;
+	let GetY = 0;
+	let GetLife = 0;
+	let OnScreen = false;
+	
+	let angle = 0;
+	let move_ang = 90;
+	let spd;
+	let way = 8; 
+	let delay = 240;
+	let multiplier = 1;
+	let color = 0;
+	let angleZ = 0;
+	
+	Const;
+	//EnemyCollision(objEnemy, 16, 4);
+	Movement;
+	Fire;
+	End;
+	FamiliarRotate(objEnemy);
+	
+	task Const {
+		while(!Obj_IsDeleted(objEnemy)) {
+			GetX = ObjMove_GetX(objEnemy);
+			GetY = ObjMove_GetY(objEnemy);
+			GetLife = ObjEnemy_GetInfo(objEnemy,INFO_LIFE);
+			OnScreen = (GetX>-20 && GetX<GetStgFrameWidth+20 && GetY>-20 && GetY<GetStgFrameHeight+20);
+			yield;
+		}
+	}
+	task Movement {
+	
+	}
+	
+	task Fire{
+		let dir = 90;
+		wait(70);
+		if(Obj_IsDeleted(objEnemy)){ return; }
+		angle = 90;
+		loop(64){
+			PlaySoundEffect("shot2", 60, GetCenterX);
+			loop(2){
+				ascent(i in -4..4){
+					let shot = CShot(GetX, GetY, 4-(i/3), dir, -0.15, 0, SHOT_KUNAI_DGREEN, 5);
+					ManageKunai(shot);
+				}
+				dir+=360/2;
+			}
+			dir+=1.61803398875*7.1*shotRotateDir;
+			wait(2);
+			if(Obj_IsDeleted(objEnemy)){ return; }
+		}
+		PlaySoundEffect("charge2", 90, GetEnemyX);
+		TCharge01(GetX, GetY, 3, 45, 255, 255, 255, BLEND_ADD_ARGB, 25);
+		wait(45);
+		if(Obj_IsDeleted(objEnemy)){ return; }
+		ascent(i in 0..6){
+			loop(33){
+				let shot = CShot(GetX, GetY, 6-(i/2), dir, -0.15, 0, SHOT_KUNAI_DGREY, 5);
+				ManageKunai(shot);
+				dir+=360/33;
+			}
+			dir+=14.35*shotRotateDir;
+		}
+		ObjEnemy_SetLife(objEnemy, 0);
+		task ManageKunai(obj){
+			wait(60);
+			ObjMove_SetMaxSpeed(obj, 2);
+			ObjMove_SetAcceleration(obj, 0.02);
+		}
+	}
+
+	
+	task End {
+		while(!OnScreen) { yield; }
+		while(GetLife>0 && OnScreen) { yield; }
+		if(OnScreen){
+			PlaySoundEffect("se_enep00", 100, GetX);
+			TExpan(GetX, GetY, 2, 15, 165, 42, 42, 100);
+		}
+		//DeleteShotInCircle(TYPE_SHOT, TYPE_ITEM, GetX, GetY, 20);
+		Obj_Delete(objEnemy);
+	}
+	
+	task EnemyCollision(objEnemy,hitboxA,hitboxB) {
+		while(!Obj_IsDeleted(objEnemy)) {
+			ObjEnemy_SetIntersectionCircleToShot(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxA);
+			ObjEnemy_SetIntersectionCircleToPlayer(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxB);
+			yield;
+		}
+	}
+	
+	task FamiliarRotate(objEnemy){
+		let angleZ = 0;
+		while(!Obj_IsDeleted(objEnemy)){
+			angleZ+=2*shotRotateDir;
+			ObjRender_SetAngleZ(objEnemy, angleZ);
+			yield;
+		}
+	}
+}
+
+task CreateTrap2(x, y, shotRotateDir, enemLife) {
+	let objEnemy = ObjEnemy_Create(OBJ_ENEMY);
+	
+	ObjEnemy_SetLife(objEnemy, enemLife);
+	ObjEnemy_SetDamageRate(objEnemy, 100, 100);
+	//Invuln(objEnemy, 60, 75, 50);
+	
+	//Invuln(objEnemy, 30, 100, 100);
+	
+	let substitute = GetCurrentScriptDirectory~"sprites/familiar.png";
+	ObjPrim_SetTexture(objEnemy, substitute);
+	ObjSprite2D_SetSourceRect(objEnemy, 128, 64, 192, 128);
+	ObjSprite2D_SetDestCenter(objEnemy);
+	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
+	
+	ObjEnemy_Regist(objEnemy);
+	ObjMove_SetPosition(objEnemy, GetEnemyX, GetEnemyY);
+	ObjMove_SetDestAtWeight(objEnemy, x, y, 5, 3);
+	
+	let GetX = 0;
+	let GetY = 0;
+	let GetLife = 0;
+	let OnScreen = false;
+	
+	let angle = 0;
+	let move_ang = 90;
+	let spd;
+	let way = 8; 
+	let delay = 240;
+	let multiplier = 1;
+	let color = 0;
+	let angleZ = 0;
+	
+	let bulletType = SHOT_KUNAI_GREEN;
+	if(shotRotateDir==-1){ bulletType = SHOT_KUNAI_ORANGE; }
+	
+	Const;
+	//EnemyCollision(objEnemy, 16, 4);
+	Movement;
+	Fire;
+	End;
+	FamiliarRotate(objEnemy);
+	
+	task Const {
+		while(!Obj_IsDeleted(objEnemy)) {
+			GetX = ObjMove_GetX(objEnemy);
+			GetY = ObjMove_GetY(objEnemy);
+			GetLife = ObjEnemy_GetInfo(objEnemy,INFO_LIFE);
+			OnScreen = (GetX>-20 && GetX<GetStgFrameWidth+20 && GetY>-20 && GetY<GetStgFrameHeight+20);
+			yield;
+		}
+	}
+	task Movement {
+	
+	}
+	
+	task Fire{
+		let dir = 90;
+		wait(70);
+		if(Obj_IsDeleted(objEnemy)){ return; }
+		angle = 90;
+		loop(42){
+			PlaySoundEffect("shot2", 60, GetCenterX);
+			loop(2){
+				ascent(i in -2..3){
+					let shot = CShot(GetX, GetY, 4-(i/3), dir, -0.15, 0, bulletType, 5);
+					ManageKunai(shot);
+				}
+				dir+=360/2;
+			}
+			dir+=1.61803398875*8.95*shotRotateDir;
+			wait(3);
+			if(Obj_IsDeleted(objEnemy)){ return; }
+		}
+		PlaySoundEffect("charge2", 90, GetEnemyX);
+		TCharge01(GetX, GetY, 3, 45, 255, 255, 255, BLEND_ADD_ARGB, 25);
+		wait(45);
+		if(Obj_IsDeleted(objEnemy)){ return; }
+		ascent(i in 0..6){
+			loop(18){
+				let shot = CShot(GetX, GetY, 5.5-(i/1.85), dir, -0.15, 0, SHOT_KUNAI_DGREY, 5);
+				ManageKunai(shot);
+				dir+=360/18;
+			}
+			dir+=28*shotRotateDir;
+		}
+		ObjEnemy_SetLife(objEnemy, 0);
+		task ManageKunai(obj){
+			wait(60);
+			ObjMove_SetMaxSpeed(obj, 1.85);
+			ObjMove_SetAcceleration(obj, 0.0185);
+		}
+	}
+
+	
+	task End {
+		while(!OnScreen) { yield; }
+		while(GetLife>0 && OnScreen) { yield; }
+		if(OnScreen){
+			PlaySoundEffect("se_enep00", 100, GetX);
+			TExpan(GetX, GetY, 2, 15, 165, 42, 42, 100);
+		}
+		//DeleteShotInCircle(TYPE_SHOT, TYPE_ITEM, GetX, GetY, 20);
+		Obj_Delete(objEnemy);
+	}
+	
+	task EnemyCollision(objEnemy,hitboxA,hitboxB) {
+		while(!Obj_IsDeleted(objEnemy)) {
+			ObjEnemy_SetIntersectionCircleToShot(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxA);
+			ObjEnemy_SetIntersectionCircleToPlayer(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxB);
+			yield;
+		}
+	}
+	
+	task FamiliarRotate(objEnemy){
+		let angleZ = 0;
+		while(!Obj_IsDeleted(objEnemy)){
+			angleZ+=2;
+			ObjRender_SetAngleZ(objEnemy, angleZ);
+			yield;
+		}
+	}
+}

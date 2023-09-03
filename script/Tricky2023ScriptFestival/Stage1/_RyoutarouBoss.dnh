@@ -1,7 +1,7 @@
 #TouhouDanmakufu[Plural]
 #ScriptVersion[3]
 #System["./../tricky_system/TrickySystem.dnh"]
-#Title["Justin Boss"]
+#Title["Ryoutarou Boss"]
 #Player["./../lib/ColePlayer/Cole.dnh"]
 
 #include "./../lib/includes/Function_Audio.dnh"
@@ -22,11 +22,10 @@ let scriptBackground;
 	StartScript(scriptBackground);
 	
 	obj = ObjEnemyBossScene_Create;
-	ObjEnemyBossScene_Add(obj, 0, CSD ~ "JustinN1.dnh");
-	ObjEnemyBossScene_Add(obj, 0, CSD ~ "JustinS1.dnh");
-	ObjEnemyBossScene_Add(obj, 1, CSD ~ "JustinN2.dnh");
-	ObjEnemyBossScene_Add(obj, 1, CSD ~ "JustinS2.dnh");
-	ObjEnemyBossScene_Add(obj, 2, CSD ~ "JustinS3.dnh");
+	ObjEnemyBossScene_Add(obj, 0, CSD ~ "RyoutarouN1.dnh");
+	ObjEnemyBossScene_Add(obj, 0, CSD ~ "RyoutarouS1.dnh");
+	ObjEnemyBossScene_Add(obj, 0, CSD ~ "RyoutarouN2.dnh");
+	ObjEnemyBossScene_Add(obj, 0, CSD ~ "RyoutarouS2.dnh");
 	ObjEnemyBossScene_LoadInThread(obj);
 	
 	Plural;

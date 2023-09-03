@@ -22,7 +22,7 @@
 
 	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
 	ObjEnemy_Regist(objEnemy);
-	Invuln(objEnemy, 180, 45, 60); //70,75
+	Invuln(objEnemy, 120, 50, 25); //70,75
 	PlayEnemyHitSound(objEnemy, 1);
 
 	let Ryoutarou = GetCurrentScriptDirectory~"sprites/Ryoutarou_Sheet.png";
@@ -54,7 +54,7 @@
 	ObjSprite2D_SetDestCenter(objEnemy); 
 	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
 	
-	ObjMove_SetPosition(objEnemy, GetCenterX, 120);
+	ObjMove_SetDestAtFrame(objEnemy, GetCenterX, 120, 60, LERP_DECELERATE);
 
 	SetAutoDeleteObject(true);
 
@@ -72,10 +72,11 @@ task End {
 }
 
 task attack1{
+	let color = 0;
 	let one = 1;
 	let angle = 0;
 	let way = 18;
-	let wayModded = 18;
+	let wayModded = 0;
 	let exp1 = 3;
 	let dir = 1;
 	wait(30);
@@ -86,19 +87,24 @@ task attack1{
 	wait(45);
 	
 	loop{
-		ascent(i in 0..6){
-			PlaySoundEffect("shot", 70, GetEnemyX);
-			wayModded = way+(i*2);
-			loop(wayModded){
-				CShot(GetEnemyX, GetEnemyY, 5-(i/2.5), angle, SHOT_ARROW_ORANGE, 15);
-				angle+=360/(wayModded);
+		ascent(j in 0..4){
+			if(j>0){ ExMove(objEnemy, GetCenterX+rand(-0.1, 0.1), rand(45, 65), 120+rand(-5, 5), 20, 1, 18); }
+			ascent(i in 0..6){
+				PlaySoundEffect("shot", 70, GetEnemyX);
+				wayModded = way+(round(i*2.25));
+				loop(wayModded){
+					CShot(GetEnemyX, GetEnemyY, 4.45-(i/1.5), angle, [SHOT_ARROW_ORANGE, SHOT_ARROW_GREEN][color%2], 15);
+					angle+=360/(wayModded);
+				}
+				angle+=(360/wayModded/2);
+				wait(8);
+				angle+=360/wayModded/3*dir;
 			}
-			angle+=(360/wayModded/2)+(i^exp1);
-			wait(8);
+			color++;
+			wait(16);
 		}
-		wait(24);
-		
-		exp1=rand(2.5, 3.5);
+		wait(60);
+		exp1=rand(2.95, 3.05);
 		
 	}	
 }

@@ -1,9 +1,9 @@
 #TouhouDanmakufu
 #ScriptVersion[3]
 #System["./../tricky_system/TrickySystem.dnh"]
-#Title["Justin Spell 1"]
+#Title["Ryoutarou Spell 1"]
 #Background["./NamelessPath.dnh"]
-#Player["./../lib/ColePlayer/Cole.dnh"]
+#Player["./../player/Tricky_Players_sx/Ashley.dnh"]
 //#BGM["./../sfx/bgm/bgm2.ogg"]
 
 #include "./../lib/TerraShot1x/shot_const.dnh"
@@ -22,12 +22,13 @@
 
 	objEnemy = ObjEnemy_Create(OBJ_ENEMY_BOSS);
 	ObjEnemy_Regist(objEnemy);
-	Invuln(objEnemy, 300, 8, 10);
+	Invuln(objEnemy, 300, 13, 9.5);
 	PlayEnemyHitSound(objEnemy, 1);
 	
-	let Justin = GetCurrentScriptDirectory~"sprites/Justin_Sheet.png";
-	ObjPrim_SetTexture(objEnemy, Justin); 
+	let Ryoutarou = GetCurrentScriptDirectory~"sprites/Ryoutarou_Sheet.png";
+	ObjPrim_SetTexture(objEnemy, Ryoutarou); 
 	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 96, 96);
+	/*
 	ascent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
 	descent(x in 0..4){ ObjAnim_AddFrameA1(objEnemy, ANIM_IDLE, 0, 96*x, 96, 96*x+96);}
 	ascent(x in 0..4){ObjAnim_AddFrameA1(objEnemy, ANIM_MOVE_RIGHT, 96, 96*x, 96*2, 96*x+96);}
@@ -48,6 +49,8 @@
 	ObjAnim_SetLoopPointA1(objEnemy, ANIM_MOVE_LEFT, 3);
 	ObjAnim_SetLoopPointA1(objEnemy, ANIM_ATTACK, 2);
 	ObjAnim_StartAnimationA2(objEnemy, 0, 0);
+	*/
+	
 	ObjSprite2D_SetDestCenter(objEnemy); 
 	ObjRender_SetScaleXYZ(objEnemy, 1, 1, 1);
 	
@@ -83,8 +86,8 @@ task delayedstart{
 	ObjEnemyBossScene_SetSpellTimer(objScene, (75)*(60));
 	PlaySoundEffect("cardcall", 90, GetCenterX);
 	
-	let justin_cut = GetCurrentScriptDirectory~"sprites/JustinCutin.png";
-	ObjCutin_SetSpellcardS4("Protection &quot;Attacking Through My Barricade Aura&quot;", justin_cut, "NAZRIN", "1", "255", "234");
+	let justin_cut = GetCurrentScriptDirectory~"sprites/RyoutarouCutin.png";
+	ObjCutin_SetSpellcardS4("Disappearance &quot;An Arrow's Unpredictable Path&quot;", justin_cut, "NAZRIN", "205", "133", "63");
 	ObjCutin_LaunchS3("NAZRIN", "0", "Hard");
 	//HiroyukiCutin;
 	NotifyEventAll(EV_SPELLBG, 0);
@@ -97,393 +100,66 @@ task delayedstart{
 
 task attack1{
 	let count = 0;
-	let dir = 0;
+	let explodeTime = 0;
+	let dir = 1;
 	let dir2 = 0;
 	let radius = 180;
 	let radius2 = 30;
-	let way = 16;
-	let way2 = 19;
+	let way = 18;
+	let wayModded = 0;
 	let one = 1;
 	let wave = 0;
 	let max = 0;
-
+	let shotRotateDir = 1;
+	let graphic = 0;
+	
 	loop{
-		PlaySoundEffect("charge2", 90, GetEnemyX);
-		TCharge01(GetEnemyX, GetEnemyY, 3, 45, 255, 215, 0, BLEND_ADD_ARGB, 25);
-		wait(45);
-		radius = 180;
-		dir = rand(0, 360);
-		if(wave>=2){ max = 1; }
-		ascent(i in 0..2+max){
-			PlaySoundEffect("boon", 100, GetEnemyX);
-			loop(4+(i*2)){
-				CreateSword(GetPlayerX+radius*cos(dir), GetPlayerY+radius*sin(dir), dir, radius, one);
-				dir+=360/(4+(i*2));
+		ascent(i in 0..10){
+				PlaySoundEffect("shot", 70, GetEnemyX);
+				wayModded = way+i;
+					graphic = [SHOT_ARROW_AZURE, SHOT_ARROW_AQUA][color%2];
+				loop(wayModded){
+					let obj = CShot(GetEnemyX, GetEnemyY, 6-(i/2), angle, -0.0525, 0, graphic, 15);
+					BetterSuzumi(obj, graphic);
+					angle+=360/(wayModded);
+				}
+				wait(6);
+				angle+=15*dir;
 			}
-			dir+=360/(4+(i*2))/2;
-			radius-=50;
-			one*=-1;
-			wait(75);
-		}
-		wait(90);
-		radius = 90;
-		ascent(i in 0..2+max){
-			PlaySoundEffect("boon", 100, GetEnemyX);
-			loop(4+(i*4)){
-				CreateShield(GetPlayerX+radius*cos(dir), GetPlayerY+radius*sin(dir), dir, radius, one, 6+(i*4));
-				dir+=360/(4+(i*4));
-			}
-			dir+=360/(4+(i*4))/2 - 15;
-			one*=-1;
-			radius+=90;
-		}
-		wait(90);
-		ExMove(objEnemy, GetPlayerX+rand(-5, 5), rand(45, 65), 120+rand(-5, 5), 20, 1, 18);
-		wait(90);
-		wave++;
+		dir*=-1;
+		ExMove(objEnemy, GetPlayerX+rand(-0.1, 0.1), rand(45, 65), 120+rand(-5, 5), 20, 1, 18);
+		wait(210);
+		color++;
 	}
 }
 
-task CreateShield(x, y, dir, rad, one, numSquareShots) {
-	let objEnemy = ObjEnemy_Create(OBJ_ENEMY);
-	
-	ObjEnemy_SetLife(objEnemy, 999999);
-	ObjEnemy_SetDamageRate(objEnemy, 0, 0);
-	
-	let sword = GetCurrentScriptDirectory~"sprites/shield.png";
-	ObjPrim_SetTexture(objEnemy, sword);
-	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 220, 220);
-	ObjSprite2D_SetDestCenter(objEnemy);
-	ObjRender_SetScaleXYZ(objEnemy, 0.225, 0.225, 0.225);
-	
-	ObjEnemy_Regist(objEnemy);
-	ObjMove_SetPosition(objEnemy, x, y);
-	ObjEnemy_SetAutoDelete(objEnemy, false);
-	
-	let GetX = 0;
-	let GetY = 0;
-	let GetLife = 0;
-	let OnScreen = false;
-	
-	let angle = 0;
-	let move_ang = 90;
-	let spd;
-	let way = 8; 
-	let delay = 240;
-	let multiplier = 1;
-	let color = 0;
-	let angleZ = 0;
-	
-	let alpha = 0;
-	let shotColor = SHOT_DIAMOND_GREY;
-	if(numSquareShots>6){ shotColor = SHOT_DIAMOND_DGREY; }
-	
-	ObjRender_SetAlpha(objEnemy, 0);
-	
-	let curAngle = dir;
-
-	ObjMove_SetPosition(objEnemy, x, y);
-	//SetIntersectionVisualization(true);
-	EnemyCollision(objEnemy,12,20);
-	Const;
-	//Movement;
-	FadeIn;
-	ShieldManagement;
-	Fire;
-	End;
-	
-	task Const {
-		while(!Obj_IsDeleted(objEnemy)) {
-			GetX = ObjMove_GetX(objEnemy);
-			GetY = ObjMove_GetY(objEnemy);
-			GetLife = ObjEnemy_GetInfo(objEnemy,INFO_LIFE);
-			OnScreen = (GetX>-120 && GetX<GetStgFrameWidth+120 && GetY>-120 && GetY<GetStgFrameHeight+120);
-			yield;
-		}
+task BetterSuzumi(obj, graphic){
+	let alpha = 255;
+	wait(54);
+	loop(54){
+		ObjRender_SetAlpha(obj, alpha);
+		if(Obj_IsDeleted(obj)){ return; }
+		if(alpha<100){ ObjShot_SetIntersectionEnable(obj, false); }
+		if(alpha<25){ ObjMove_SetSpeed(obj, 0); }
+		alpha-=255/54;
+		yield;
 	}
-	
-	task FadeIn{
-		let fadeTime = 30;
-		let fadeCount = 0;
-		loop(30){
-			fadeCount++;
-			alpha = Interpolate_Smooth(0, 255, fadeCount/fadeTime);
-			if(!Obj_IsDeleted(objEnemy)){ ObjRender_SetAlpha(objEnemy, alpha); }
-			yield;
-		}
-	}
-	task FadeOut{
-		let fadeTime = 30;
-		let fadeCount = 0;
-		loop(30){
-			fadeCount++;
-			alpha = Interpolate_Smooth(255, 0, fadeCount/fadeTime);
-			if(!Obj_IsDeleted(objEnemy)){ ObjRender_SetAlpha(objEnemy, alpha); }
-			yield;
-		}
-		if(!Obj_IsDeleted(objEnemy)){ Obj_Delete(objEnemy); }
-	}	
-	
-	task ShieldManagement {
-		let startSpeed = 6;
-		let curSpeed = 6;
-		let endSpeed = 0;
-		let spinCount = 0;
-		let spinTime = 105;
-		let triggered = false;
-		ObjMove_SetAngle(objEnemy, move_ang);
-		
-		while(!Obj_IsDeleted(objEnemy)){
-			spinCount++;
-			if(spinCount<spinTime){
-				curSpeed = Interpolate_Decelerate(startSpeed, endSpeed, spinCount/spinTime);
-				curAngle+= curSpeed*one;
-				ObjMove_SetPosition(objEnemy, GetPlayerX+rad*cos(curAngle), GetPlayerY+rad*sin(curAngle));
-				ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy));
-				ObjRender_SetAngleXYZ(objEnemy, 1, 1, GetAngleToPlayer(objEnemy)+90);
-			}
-			
-			if(spinCount == spinTime){
-				Explode(objEnemy, ObjMove_GetAngle(objEnemy));
-				break;
-			}
-			yield;
-		}
-		wait(60); 
-		FadeOut;
-	}
-	
-	task FollowEnemy(obj, followingObject, verticalOffset){
-		while(!Obj_IsDeleted(obj)){
-			if(!Obj_IsDeleted(followingObject)){
-				ObjMove_SetX(obj, ObjMove_GetX(followingObject));
-				ObjMove_SetY(obj, ObjMove_GetY(followingObject)+verticalOffset);
-			}
-			yield;
-		}
-	}
-	
-	task Explode(sourceEnemy, dir){
-		PolygonShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0.75, dir+(15+((numSquareShots-6)*3))*one, 4, numSquareShots, 1, shotColor, 20);
-		PlaySoundEffect("shot3", 100, GetCenterX);
-	}
-	
-	function PolygonShot(x, y, speed, angle, way, way2, way_angle, graphic, delay){
-    let Bullets = []; let counter = 0;
-
-    let bpos_x = [];
-    let bpos_y = [];
-    ascent(i in 0..way){
-      let tmp_angle = 360 / way * i;
-      bpos_x = bpos_x ~ [cos(tmp_angle)];
-      bpos_y = bpos_y ~ [sin(tmp_angle)];
-    }
-
-    ascent(i in 0..way){
-      let from_x = x + bpos_x[i % way];
-      let from_y = y + bpos_y[i % way];
-      let to_x = x + bpos_x[(i + way_angle) % way];
-      let to_y = y + bpos_y[(i + way_angle) % way];
-
-      ascent(j in 0..way2){
-                let tmp = (j + 1) / way2;
-           let vx = GetLinePosition(from_x, to_x, tmp);
-        let vy = GetLinePosition(from_y, to_y, tmp);
-        let dx = vx - x;
-             let dy = vy - y;
-        let va = atan2(dy, dx) + angle;
-        let vs = (dx * dx + dy * dy) ^ 0.5;
-
-        Bullets = Bullets ~ [CShot(x, y, vs * speed, va, graphic, delay)];
-                Obj_SetValue(Bullets[counter], "var_speed", vs);
-                counter++;
-      }
-        }
-    function GetLinePosition(from_pos, to_pos, pos_t){
-        return (from_pos + (to_pos - from_pos) * pos_t);
-    }
-
-        return Bullets;
-	}
-	
-	task Fire{
-		while(!Obj_IsDeleted(objEnemy)){
-			yield;
-		}
-	}
-	
-	
-	task End {
-	/*
-		while(!OnScreen) { yield; }
-		while(GetLife>0 && OnScreen) { yield; }
-		if(OnScreen){
-			//PlaySoundEffect("thwomp", 100, GetX);
-			//TExpan(GetX, GetY, 2, 15, 165, 42, 42, 100);
-		}
-		//DeleteShotInCircle(TYPE_SHOT, TYPE_ITEM, GetX, GetY, 20);
-		Obj_Delete(objEnemy);
-	*/
-	}
-	
-	task EnemyCollision(objEnemy,hitboxA,hitboxB) {
-		while(!Obj_IsDeleted(objEnemy)) {
-			//ObjEnemy_SetIntersectionCircleToPlayer(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxB);
-			yield;
-		}
+	wait(15);
+	if(!Obj_IsDeleted(obj)){
+		let obj2 = CShot(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, ObjMove_GetAngle(obj)+45, 0.0175, 3, graphic, 45);
+		ForgivingArrow(obj2);
+		obj2 = CShot(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, ObjMove_GetAngle(obj)-45, 0.0175, 3, graphic, 45);
+		ForgivingArrow(obj2);
+		Obj_Delete(obj);
 	}
 }
 
-task CreateSword(x, y, dir, rad, one) {
-	let objEnemy = ObjEnemy_Create(OBJ_ENEMY);
-	
-	ObjEnemy_SetLife(objEnemy, 999999);
-	ObjEnemy_SetDamageRate(objEnemy, 0, 0);
-	
-	let sword = GetCurrentScriptDirectory~"sprites/Sword_Straight.png";
-	ObjPrim_SetTexture(objEnemy, sword);
-	ObjSprite2D_SetSourceRect(objEnemy, 0, 0, 109, 300);
-	ObjSprite2D_SetDestCenter(objEnemy);
-	ObjRender_SetScaleXYZ(objEnemy, 0.25, 0.25, 0.5);
-	
-	ObjEnemy_Regist(objEnemy);
-	ObjMove_SetPosition(objEnemy, x, y);
-	ObjEnemy_SetAutoDelete(objEnemy, false);
-	
-	let GetX = 0;
-	let GetY = 0;
-	let GetLife = 0;
-	let OnScreen = false;
-	
-	let angle = 0;
-	let move_ang = 90;
-	let spd;
-	let way = 8; 
-	let delay = 240;
-	let multiplier = 1;
-	let color = 0;
-	let angleZ = 0;
-	
-	let alpha = 0;
-	
-	ObjRender_SetAlpha(objEnemy, 0);
-	
-	let curAngle = dir;
-
-	ObjMove_SetPosition(objEnemy, x, y);
-	//SetIntersectionVisualization(true);
-	//EnemyCollision(objEnemy,12,20);
-	Const;
-	//Movement;
-	FadeIn;
-	SwordManagement;
-	Fire;
-	End;
-	
-	task Const {
-		while(!Obj_IsDeleted(objEnemy)) {
-			GetX = ObjMove_GetX(objEnemy);
-			GetY = ObjMove_GetY(objEnemy);
-			GetLife = ObjEnemy_GetInfo(objEnemy,INFO_LIFE);
-			OnScreen = (GetX>-120 && GetX<GetStgFrameWidth+120 && GetY>-120 && GetY<GetStgFrameHeight+120);
-			yield;
-		}
-	}
-	
-	task FadeIn{
-		let fadeTime = 30;
-		let fadeCount = 0;
-		loop(30){
-			fadeCount++;
-			alpha = Interpolate_Smooth(0, 255, fadeCount/fadeTime);
-			if(!Obj_IsDeleted(objEnemy)){ ObjRender_SetAlpha(objEnemy, alpha); }
-			yield;
-		}
-	}
-	task FadeOut{
-		let fadeTime = 30;
-		let fadeCount = 0;
-		loop(30){
-			fadeCount++;
-			alpha = Interpolate_Smooth(255, 0, fadeCount/fadeTime);
-			if(!Obj_IsDeleted(objEnemy)){ ObjRender_SetAlpha(objEnemy, alpha); }
-			yield;
-		}
-		if(!Obj_IsDeleted(objEnemy)){ Obj_Delete(objEnemy); }
-	}	
-	
-	task SwordManagement {
-		let startSpeed = 6;
-		let curSpeed = 6;
-		let endSpeed = 0;
-		let spinCount = 0;
-		let spinTime = 105;
-		let triggered = false;
-		ObjMove_SetAngle(objEnemy, move_ang);
-		
-		while(!Obj_IsDeleted(objEnemy)){
-			spinCount++;
-			if(spinCount<spinTime){
-				curSpeed = Interpolate_Decelerate(startSpeed, endSpeed, spinCount/spinTime);
-				curAngle+= curSpeed*one;
-				ObjMove_SetPosition(objEnemy, GetPlayerX+rad*cos(curAngle), GetPlayerY+rad*sin(curAngle));
-				ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy));
-				ObjRender_SetAngleXYZ(objEnemy, 1, 1, GetAngleToPlayer(objEnemy)+90);
-			}
-			
-			if(spinCount == spinTime){
-				Lasers(objEnemy, ObjMove_GetAngle(objEnemy));
-				break;
-			}
-			yield;
-		}
-		wait(60); 
-		FadeOut;
-	}
-	
-	task FollowEnemy(obj, followingObject, verticalOffset){
-		while(!Obj_IsDeleted(obj)){
-			if(!Obj_IsDeleted(followingObject)){
-				ObjMove_SetX(obj, ObjMove_GetX(followingObject));
-				ObjMove_SetY(obj, ObjMove_GetY(followingObject)+verticalOffset);
-				ObjMove_SetAngle(obj, ObjMove_GetAngle(followingObject));
-			}
-			yield;
-		}
-	}
-	
-	task Lasers(sourceEnemy, dir){
-		let obj = CreateStraightLaserA1(ObjMove_GetX(sourceEnemy), ObjMove_GetY(sourceEnemy), dir, 700, 20, 30, SHOT_LASER_YELLOW, 45);
-		ObjStLaser_SetPermitExpand(obj, true);
-		ObjStLaser_SetSource(obj, false);
-		//FollowEnemy(obj, sourceEnemy, i*8);
-		wait(45);
-		PlaySoundEffect("slash", 100, GetCenterX);
-	}
-	
-	task Fire{
-		while(!Obj_IsDeleted(objEnemy)){
-			yield;
-		}
-	}
-	
-	task End {
-	/*
-		while(!OnScreen) { yield; }
-		while(GetLife>0 && OnScreen) { yield; }
-		if(OnScreen){
-			//PlaySoundEffect("thwomp", 100, GetX);
-			//TExpan(GetX, GetY, 2, 15, 165, 42, 42, 100);
-		}
-		//DeleteShotInCircle(TYPE_SHOT, TYPE_ITEM, GetX, GetY, 20);
-		Obj_Delete(objEnemy);
-	*/
-	}
-	
-	task EnemyCollision(objEnemy,hitboxA,hitboxB) {
-		while(!Obj_IsDeleted(objEnemy)) {
-			ObjEnemy_SetIntersectionCircleToPlayer(objEnemy,ObjMove_GetX(objEnemy),ObjMove_GetY(objEnemy),hitboxB);
-			yield;
-		}
+task ForgivingArrow(obj){
+	ObjShot_SetIntersectionEnable(obj, false);
+	wait(45);
+	if(!Obj_IsDeleted(obj)){
+		ObjShot_SetIntersectionEnable(obj, true);
 	}
 }
+	
+	

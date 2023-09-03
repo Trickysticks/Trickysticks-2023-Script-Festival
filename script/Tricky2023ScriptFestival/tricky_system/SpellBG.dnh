@@ -48,7 +48,7 @@ task CreateSpellBackground(arg){
 	alternative(arg)
 		case(0){
 			array = array ~ [obj1];
-			let path1 = CSD ~ "spellbg/JustinStaticBG.png";
+			let path1 = CSD ~ "spellbg/RyoutarouStaticBG.png";
 			ObjRender_SetBlendType(obj1, BLEND_ALPHA);
 			Obj_SetRenderPriority(obj1, 0.24);
 			ObjPrim_SetTexture(obj1, path1);
@@ -74,13 +74,13 @@ task CreateSpellBackground(arg){
 			*/
 			
 			array = array ~ [obj3];
-			let path3 = CSD ~ "spellbg/JustinMovingBG.png";
+			let path3 = CSD ~ "spellbg/RyoutarouMovingBG.png";
 			ObjRender_SetBlendType(obj3, BLEND_ALPHA);
 			Obj_SetRenderPriority(obj3, 0.24);
 			ObjPrim_SetTexture(obj3, path3);
 			ObjSprite2D_SetSourceRect(obj3, 0, 0, 1024, 1024);
 			ObjSprite2D_SetDestCenter(obj3);
-			ObjRender_SetPosition(obj3, (384/2), 448/2, 0);
+			ObjRender_SetPosition(obj3, (384/2)-2, 448/2, 0);
 			ObjRender_SetScaleX(obj3, 0.5);
 			ObjRender_SetScaleY(obj3, 0.5);
 			Obj_SetValue(obj3, "maxalpha", 150);
@@ -190,7 +190,7 @@ task CreateSpellBackground(arg){
 		if(arg==0){ //if Hiroyuki spell BG
 			
 			if(alpha>=255){ //once the backgrounds fade in, start modulating alpha of top layer
-				alpha2 = 90+60*cos(mod2);
+				alpha2 = 120+40*cos(mod2);
 				//ObjRender_SetAlpha(obj2, 120+max(0, 60*sin(mod2-90)));
 				ObjRender_SetAlpha(obj3, alpha2);
 				Obj_SetValue(obj3, "maxalpha", alpha2);
@@ -200,10 +200,10 @@ task CreateSpellBackground(arg){
 			}
 			else{
 				//ObjRender_SetAlpha(obj2, alpha/2.15);
-				ObjRender_SetAlpha(obj3, alpha/1.7); //fade in top layer with bottom layer
-				Obj_SetValue(obj3, "maxalpha", alpha/1.7);
+				ObjRender_SetAlpha(obj3, alpha/1.59375); //fade in top layer with bottom layer
+				Obj_SetValue(obj3, "maxalpha", alpha/1.59375);
 			}
-			ObjSprite2D_SetSourceRect(obj3, 0+(mod/1), 0-(mod/2), 1024+(mod/1), 1024-(mod/2));
+			ObjSprite2D_SetSourceRect(obj3, 0, 0-mod, 1024, 1024-mod);
 			//ObjRender_SetAlpha(obj2, 0);
 			mod-=0.75;
 		}

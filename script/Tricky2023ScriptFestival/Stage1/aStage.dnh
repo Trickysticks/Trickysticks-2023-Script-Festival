@@ -41,9 +41,9 @@ task LoadBosses {
 	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "Ryoutarou0.dnh");
 	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "RyoutarouN1.dnh");
 	ObjEnemyBossScene_Add(objboss, 0, CSD ~ "RyoutarouS1.dnh");
-	//ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinN2.dnh");
-	//ObjEnemyBossScene_Add(objboss, 1, CSD ~ "JustinS2.dnh");
-	//ObjEnemyBossScene_Add(objboss, 2, CSD ~ "JustinS3.dnh");
+	ObjEnemyBossScene_Add(objboss, 1, CSD ~ "RyoutarouN2.dnh");
+	ObjEnemyBossScene_Add(objboss, 1, CSD ~ "RyoutarouS2.dnh");
+	
 	//WriteLog("Loading in Load Thread...");
 	ObjEnemyBossScene_LoadInThread(objboss);
 	
@@ -180,8 +180,8 @@ task TStage{
 	SetShotAutoDeleteClip(32, 40, 32, 32);
 	//
 
-	//Event0;
-	Event0_Short;
+	Event0;
+	//Event0_Short;
 
 	while(!Obj_IsDeleted(objboss)){
 		yield;
@@ -469,7 +469,7 @@ task Event0{
 	SetEventText(0, 0, "Man, I'm good at this.", 0);
 	
 	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
-	SetEventText(0, 0, "Aaand I'm making sooooo much noise!", 0);
+	SetEventText(0, 0, "Shame I'm making sooooo much noise!", 0);
 	SetEventText(0, 4, "Wouldn't it, like, totally suck if a[r]cat youkai showed up to eat me?", 0);
 	
 	Talking(1);
@@ -552,7 +552,7 @@ task Event0{
 	
 	Talking(0);
 	SetCutinGraphic(0, 0, ashleySurprised, ashleyX, ashleyY, false);
-	SetEventText(0, 0, "Oh golly gee!", 0);
+	SetEventText(0, 0, "Well golly gee fiddly foo!", 0);
 	
 	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
 	SetEventText(0, 0, "Now THAT'S what I expected.", 0);
@@ -582,7 +582,7 @@ task Event0{
 	Talking(0);
 	SetEventText(0, 0, "Yeah!", 0);
 	SetEventText(0, 0, "One said she'd do the strangle into eat combo!", 0);
-	SetEventText(0, 0, "YOU were tired as heck! But still said it!", 0);
+	SetEventText(0, 0, "YOU were tired as heck! But you still said it!", 0);
 	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
 	SetEventText(0, 0, "What's a girl gotta do to get youkai respect?", 0);
 	
@@ -604,7 +604,7 @@ task Event0{
 	SetEventText(0, 0, "...", 0);
 	
 	SetCutinGraphic(0, 0, ashleyNormal, ashleyX, ashleyY, false);
-	SetEventText(0, 4, "Anyway! I'm not afraid of people[r]that have articles on Wikipedia!", 0);
+	SetEventText(0, 4, "Anyway! I'm not afraid of youkai that[r]I know about! You're on, like, Ashleypedia!", 0);
 	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
 	SetEventText(0, 4, "So, we're gonna settle this[r]the way you animals do it!", 0);
 	
@@ -628,7 +628,7 @@ task Event0{
 	
 	Talking(0);
 	SetCutinGraphic(0, 0, ashleyAngry, ashleyX, ashleyY, false);
-	SetEventText(0, 1, "Heck no! Die!", 0);
+	SetEventText(0, 1, "Hell no! Die!", 0);
 	
 	SetCutinGraphic(0, 0, ashleyAnnoyed, ashleyX, ashleyY, false);
 	SetEventText(0, 0, "...by running out of spellcards I mean.", 0);
@@ -668,7 +668,7 @@ task Event1{
 	HandleEventLogic();
 	SetCutinGraphic(0, 0, ashleyHappy, ashleyX, ashleyY, false);
 	SetCharStatusPresent(0, 0, true);
-	SetCutinGraphic(1, 0, ryoutarouTired, ryoutarouX, ryoutarouY, false);
+	SetCutinGraphic(1, 0, ryoutarouTiredDefeated, ryoutarouX, ryoutarouY, false);
 	SetCharStatusPresent(1, 0, true);
 	
 	Talking(0);
@@ -753,8 +753,7 @@ task Event1{
 	
 	wait(120);
 	
-	
-	SetCutinGraphic(1, 0, ryoutarouWorried, ryoutarouX, ryoutarouY, false);
+	SetCutinGraphic(1, 0, ryoutarouWorriedDefeated, ryoutarouX, ryoutarouY, false);
 	SetCharStatusPresent(1, 0, true);
 	wait(30);
 	
@@ -763,8 +762,8 @@ task Event1{
 	wait(30);
 	SetEventText(1, 0, "...", 0);
 	
-	SetCutinGraphic(1, 0, ryoutarouTired, ryoutarouX, ryoutarouY, false);
-	SetEventText(1, 0, "...humans are annoying...keep waking me up...", 0);
+	SetCutinGraphic(1, 0, ryoutarouTiredDefeated, ryoutarouX, ryoutarouY, false);
+	SetEventText(1, 0, "...humans are annoying...just want sleep...", 0);
 	
 	SetCharStatusPresent(1, 0, false);
 	wait(30);

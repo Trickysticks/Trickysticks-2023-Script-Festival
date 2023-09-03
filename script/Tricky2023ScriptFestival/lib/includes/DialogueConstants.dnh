@@ -14,4 +14,6 @@ let ryoutarouConfused = img_CSD ~ "../../sprites/portraits/RyoutarouConfused.png
 let ryoutarouHappy = img_CSD ~ "../../sprites/portraits/RyoutarouHappy.png";
 let ryoutarouSurprised = img_CSD ~ "../../sprites/portraits/RyoutarouSurprised.png";
 let ryoutarouTired = img_CSD ~ "../../sprites/portraits/RyoutarouTired.png";
+let ryoutarouTiredDefeated = img_CSD ~ "../../sprites/portraits/RyoutarouTiredDefeated.png";
 let ryoutarouWorried = img_CSD ~ "../../sprites/portraits/RyoutarouWorried.png";
+let ryoutarouWorriedDefeated = img_CSD ~ "../../sprites/portraits/RyoutarouWorriedDefeated.png";
