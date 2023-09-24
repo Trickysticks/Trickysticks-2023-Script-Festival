@@ -172,10 +172,10 @@ task TStage{
 	Title;
 	*/
 	
-	/*do uncomment BOTH waits once ready
+	do uncomment BOTH waits once ready
 	wait(175);
 	wait(240);
-	*/
+
 	SetCommonData("BGSpeed", 0.5);
 	SetShotAutoDeleteClip(32, 40, 32, 32);
 	//
